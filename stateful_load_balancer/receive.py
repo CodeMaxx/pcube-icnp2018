@@ -28,7 +28,8 @@ def handle_pkt(pkt):
 	preamble_exp = "\x00" * 8
 	if preamble != preamble_exp: return
 	num_valid = struct.unpack("<L", pkt[8:12])[0]
-	msg = pkt[12:]
+	size = pkt[12:16]
+	msg = pkt[16:]
 	print msg
 	sys.stdout.flush()
 

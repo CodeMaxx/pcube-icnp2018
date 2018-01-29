@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2013-present Barefoot Networks, Inc. 
+# Copyright 2018-present Akash Trehan 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,11 +22,14 @@ import networkx as nx
 
 import sys
 
+import random
+
 class SrcRoute(Packet):
     name = "SrcRoute"
     fields_desc = [
         LongField("preamble", 0),
-        IntField("num_valid", 2)
+        IntField("num_valid", 2),
+        IntField("packet_size", 256),
     ]
 
 def read_topo():
@@ -51,9 +54,25 @@ def main():
     nb_hosts, nb_switches, links = read_topo()
 
     n = 100
+    C1 = 0; C2 = 0; C3 = 0; C4 = 0
+    print C1, C2, C3, C4
+    host = 0
     while(n):
-        first = None
-        p = SrcRoute(num_valid = 4) / str(n)
+        packet_size = random.randint(0, 256)
+        # packet_size = 5
+        if(C1 <= C2 and C1 <= C3 and C1 <= C4):
+            C1 += packet_size
+            host = 2
+        elif(C2 <= C1 and C2 <= C3 and C2 <= C4):
+            host = 3
+            C2 += packet_size
+        elif(C3 <= C1 and C3 <= C2 and C3 <= C4):
+            host = 4
+            C3 += packet_size
+        else:
+            host = 5
+            C4 += packet_size
+        p = SrcRoute(num_valid = 4, packet_size=packet_size) / (str(packet_size) + " " + str(host))
         print p.show()
         sendp(p, iface = "eth0")
         n-=1

@@ -20,6 +20,7 @@ header_type load_balancer_t {
     fields {
         preamble: 64;
         num_valid: 32;
+        packet_size: 32;
     }
 }
 
@@ -27,7 +28,11 @@ header load_balancer_t load_balancer_head;
 
 header_type meta_t {
     fields {
-        register_tmp : 32;
+        count1: 32;
+        count2: 32;
+        count3: 32;
+        count4: 32;
+        final_port: 32;
     }
 }
 
@@ -49,34 +54,99 @@ action _drop() {
     drop();
 }
 
-register round_robin_register {
+register size_register {
     width: 32;
-    static: route_pkt;
     instance_count: 4;
 }
 
-//Ports start from 1,2,3...
-action route() {
-    register_read(meta.register_tmp, round_robin_register, 0);
-    modify_field(standard_metadata.egress_spec, meta.register_tmp % SERVERS);
-    add_to_field(standard_metadata.egress_spec, 2);
-    add_to_field(meta.register_tmp, 1);
-    register_write(round_robin_register,0,meta.register_tmp);
+action get_port() {
+    register_read(meta.count1, size_register, 0);
+    register_read(meta.count2, size_register, 1);
+    register_read(meta.count3, size_register, 2);
+    register_read(meta.count4, size_register, 3);
 }
 
-table route_pkt {
-    reads {
-        load_balancer_head.num_valid: valid;
-    }
+table get_port_table {
     actions {
-        route;
-        _drop;
+        get_port;
+    }
+    size: 1;
+}
+
+action route4() {
+    modify_field(meta.final_port, 5);
+    modify_field(standard_metadata.egress_spec, meta.final_port);
+    register_read(meta.count1, size_register, 3);
+    add_to_field(meta.count1, load_balancer_head.packet_size);
+    register_write(size_register, 3, meta.count1);
+}
+
+table route_table4 {
+    actions {
+        route4;
+    }
+    size: 1;
+}
+
+action route1() {
+    modify_field(meta.final_port, 2);
+    modify_field(standard_metadata.egress_spec, meta.final_port);
+    register_read(meta.count1, size_register, 0);
+    add_to_field(meta.count1, load_balancer_head.packet_size);
+    register_write(size_register, 0, meta.count1);
+}
+
+table route_table1 {
+    actions {
+        route1;
+    }
+    size: 1;
+}
+
+action route2() {
+    modify_field(meta.final_port, 3);
+    modify_field(standard_metadata.egress_spec, meta.final_port);
+    register_read(meta.count1, size_register, 1);
+    add_to_field(meta.count1, load_balancer_head.packet_size);
+    register_write(size_register, 1, meta.count1);
+}
+
+table route_table2 {
+    actions {
+        route2;
+    }
+    size: 1;
+}
+
+action route3() {
+    modify_field(meta.final_port, 4);
+    modify_field(standard_metadata.egress_spec, meta.final_port);
+    register_read(meta.count1, size_register, 2);
+    add_to_field(meta.count1, load_balancer_head.packet_size);
+    register_write(size_register, 2, meta.count1);
+}
+
+table route_table3 {
+    actions {
+        route3;
     }
     size: 1;
 }
 
 control ingress {
-    apply(route_pkt);
+    apply(get_port_table);
+    if(meta.count1 <= meta.count2 and meta.count1 <= meta.count3 and meta.count1 <= meta.count4) {
+        apply(route_table1);
+    }
+    else if(meta.count2 <= meta.count1 and meta.count2 <= meta.count3 and meta.count2 <= meta.count4) {
+        apply(route_table2);
+    }
+    else if(meta.count3 <= meta.count1 and meta.count3 <= meta.count2 and meta.count3 <= meta.count4) {
+        apply(route_table3);
+    }
+    else {
+        apply(route_table4);
+    }
 }
 
 control egress {

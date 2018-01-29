@@ -1,2 +1,5 @@
-table_set_default route_pkt route
-table_add route_pkt _drop 0 =>
+table_set_default route_table1 route1
+table_set_default route_table2 route2
+table_set_default route_table3 route3
+table_set_default route_table4 route4
+table_set_default get_port_table get_port
