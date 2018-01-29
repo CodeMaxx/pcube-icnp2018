@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/python
 
 # Copyright 2013-present Barefoot Networks, Inc. 
 # 
@@ -14,20 +14,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-THIS_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+from scapy.all import sniff, sendp
+from scapy.all import Packet
+from scapy.all import ShortField, IntField, LongField, BitField
 
-source $THIS_DIR/../../../env.sh
+import sys
+import struct
 
-P4C_BM_SCRIPT=$P4C_BM_PATH/p4c_bm/__main__.py
+def handle_pkt(pkt):
+	pkt = str(pkt)
+	if len(pkt) < 12: return
+	preamble = pkt[:8]
+	preamble_exp = "\x00" * 8
+	if preamble != preamble_exp: return
+	num_valid = struct.unpack("<L", pkt[8:12])[0]
+	msg = pkt[12:]
+	print msg
+	sys.stdout.flush()
 
-SWITCH_PATH=$BMV2_PATH/targets/simple_switch/simple_switch
+def main():
+	sniff(iface = "eth0",
+		  prn = lambda x: handle_pkt(x))
 
-CLI_PATH=$BMV2_PATH/tools/runtime_CLI.py
-rmpcap
-$P4C_BM_SCRIPT p4src/stateless_load_balancer.p4 --json stateless_load_balancer.json
-# This gives libtool the opportunity to "warm-up"
-sudo $SWITCH_PATH >/dev/null 2>&1
-sudo PYTHONPATH=$PYTHONPATH:$BMV2_PATH/mininet/ python topo.py \
-    --behavioral-exe $SWITCH_PATH \
-    --json stateless_load_balancer.json \
-    --cli $CLI_PATH
+if __name__ == '__main__':
+	main()

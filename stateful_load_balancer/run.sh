@@ -24,10 +24,10 @@ SWITCH_PATH=$BMV2_PATH/targets/simple_switch/simple_switch
 
 CLI_PATH=$BMV2_PATH/tools/runtime_CLI.py
 rmpcap
-$P4C_BM_SCRIPT p4src/stateless_load_balancer.p4 --json stateless_load_balancer.json
+$P4C_BM_SCRIPT p4src/stateful_load_balancer.p4 --json stateful_load_balancer.json
 # This gives libtool the opportunity to "warm-up"
 sudo $SWITCH_PATH >/dev/null 2>&1
 sudo PYTHONPATH=$PYTHONPATH:$BMV2_PATH/mininet/ python topo.py \
     --behavioral-exe $SWITCH_PATH \
-    --json stateless_load_balancer.json \
+    --json stateful_load_balancer.json \
     --cli $CLI_PATH
