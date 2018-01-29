@@ -1,3 +1,7 @@
+# PCAP & JSON files from P4
+*.pcap
+*.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
