@@ -1,5 +1,5 @@
 switches 4
-hosts 9
+hosts 12
 h10 s1
 h11 s1
 h12 s1
