@@ -1,2 +1,4 @@
-table_set_default route_pkt route
-table_add route_pkt _drop 0 =>
+table_set_default set_dest_port_table set_dest_port
+table_set_default update_map_table update_map
+table_set_default clear_map_table clear_map
+table_set_default forwarding_table forward
