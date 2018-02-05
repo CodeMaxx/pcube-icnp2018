@@ -41,6 +41,7 @@ header_type switch_info_t switch_info_head;
 header_type meta_t {
     fields {
         total_flow_count : 32;
+        hash: 32;
         routing_port: 32;
     }
 }
@@ -141,15 +142,22 @@ action set_dest_port() {
 }
 
 action update_map() {
-
+    modify_field_with_hash_based_offset(meta.hash, 0,
+                                        flow_register_index, 16);
+    register_write(flow_to_port_map_register, meta.hash, standard_metadata.egress_spec);
 }
 
 action clear_map() {
-
+    modify_field_with_hash_based_offset(meta.hash, 0,
+                                        flow_register_index, 16);
+    register_write(flow_to_port_map_register, meta.hash, 0);
 }
 
 action forward() {
-
+    modify_field_with_hash_based_offset(meta.hash, 0,
+                                        flow_register_index, 16);
+    register_read(meta.routing_port, flow_to_port_map_register, meta.hash);
+    modify_field(standard_metadata.egress_spec, meta.routing_port);
 }
 
 action _drop() {
