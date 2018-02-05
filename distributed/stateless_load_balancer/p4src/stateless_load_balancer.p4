@@ -1,41 +1,37 @@
-/*
-Copyright 2013-present Barefoot Networks, Inc. 
+#define SERVERS 2
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
-#define SERVERS 4
-
+//-------------------- Headers ------------------------
 header_type load_balancer_t {
     fields {
         preamble: 64;
-        num_valid: 32;
+        flags: 2;
+        fid: 32;
     }
 }
-
 header load_balancer_t load_balancer_head;
+
+header_type switch_info_t {
+	fields {
+        swid: 32;
+        flow_num: 32;
+    }
+}
+header_type switch_info_t switch_info_head;
 
 header_type meta_t {
     fields {
-        register_tmp : 32;
+        temp_reg : 32;
     }
 }
-
 metadata meta_t meta;
 
+//-----------------------------------------------------
+
+//-------------------- Parsers ------------------------
 parser start {
     return select(current(0, 64)) {
         0: parse_head;
+        //1: interswitch;
         default: ingress;
     }
 }
@@ -45,38 +41,47 @@ parser parse_head {
     return ingress;
 }
 
+//-----------------------------------------------------
+
 action _drop() {
     drop();
 }
 
-register round_robin_register {
+//------------------ Select Port -----------------------
+register flow_count_register {
     width: 32;
-    static: route_pkt;
     instance_count: 1;
 }
 
-//Ports start from 1,2,3...
-action route() {
-    register_read(meta.register_tmp, round_robin_register, 0);
-    modify_field(standard_metadata.egress_spec, meta.register_tmp % SERVERS);
-    add_to_field(standard_metadata.egress_spec, 2);
-    add_to_field(meta.register_tmp, 1);
-    register_write(round_robin_register,0,meta.register_tmp);
+action select_port() {
+	register_read(meta.temp_reg, flow_count_register, 0);
+    modify_field(standard_metadata.egress_spec, (meta.temp_reg % SERVERS)+2);
+    add_to_field(meta.temp_reg, 1);
+    register_write(flow_count_register,0,meta.temp_reg);
 }
 
-table route_pkt {
-    reads {
-        load_balancer_head.num_valid: valid;
-    }
-    actions {
-        route;
-        _drop;
-    }
-    size: 1;
+table select_port_table{
+	actions{
+		select_port;
+	}
+	size: 1;
 }
+//-------------------------------------------------------
+
+
+
+
+//------------------------ Control Logic -----------------
 
 control ingress {
-    apply(route_pkt);
+    if(load_balancer_head.flags == 0x01){
+    	apply(select_port_table);
+    	apply()
+    }
+    apply(route_packet_table);
+    if(load_balancer_head.flags == 0x02){
+    	apply(clear_port);
+    }
 }
 
 control egress {

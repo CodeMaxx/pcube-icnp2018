@@ -43,7 +43,7 @@ def main():
         fid = HOSTNAME + " 0" + str(flow)
         p = LoadBalancePkt(flags=0b11  , fid=fid) / str(fid)
         print p.show()
-        # sendp(p, iface = "eth0")
+        sendp(p, iface = "eth0")
 
 if __name__ == '__main__':
     main()
