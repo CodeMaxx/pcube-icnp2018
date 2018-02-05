@@ -16,7 +16,7 @@
 
 from scapy.all import sniff, sendp
 from scapy.all import Packet
-from scapy.all import ShortField, IntField, LongField, BitField
+from scapy.all import ShortField, IntField, LongField, BitField, FlagsField, StrFixedLenField
 
 import networkx as nx
 
@@ -30,8 +30,8 @@ class LoadBalancePkt(Packet):
     name = "SrcRoute"
     fields_desc = [
         LongField("preamble", 0),
-        FlagField("flags", 0, 2, ["syn", "fin"]),
-        StrFixedLenField("fid", '', len=4),
+        FlagsField("flags", 0, 2, ["syn", "fin"]),
+        StrFixedLenField("fid", '', length=4),
         IntField("swid", 0),
         IntField("flow_num", 0)
     ]
@@ -41,7 +41,7 @@ def main():
     num_flows = 10
     for flow in range(num_flows):
         fid = HOSTNAME + " 0" + str(flow)
-        p = LoadBalancePkt(flags=0b10, fid=fid) / str(fid)
+        p = LoadBalancePkt(flags=0b11  , fid=fid) / str(fid)
         print p.show()
         # sendp(p, iface = "eth0")
 
