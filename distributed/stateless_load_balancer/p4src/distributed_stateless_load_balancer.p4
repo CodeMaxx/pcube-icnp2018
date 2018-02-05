@@ -52,7 +52,7 @@ metadata meta_t meta;
 // ---------------------- Hashing ------------------
 
 field_list flow_list {
-    load_balancer_t.fid;
+    load_balancer_head.fid;
 }
 
 field_list_calculation flow_register_index {
@@ -76,12 +76,6 @@ parser start {
 parser parse_head {
     extract(load_balancer_head);
     return ingress;
-}
-
-//---------------- Drop -------------------------------
-
-action _drop() {
-    drop();
 }
 
 //------------------ Registers -----------------------
