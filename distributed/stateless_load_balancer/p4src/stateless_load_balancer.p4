@@ -21,6 +21,7 @@ header_type switch_info_t switch_info_head;
 header_type meta_t {
     fields {
         temp_reg : 32;
+        routing_port: 32;
     }
 }
 metadata meta_t meta;
@@ -68,7 +69,38 @@ table select_port_table{
 }
 //-------------------------------------------------------
 
+table update_routing_table{
+	actions{
 
+	}
+	size: 1;
+}
+
+action route(){
+
+}
+
+action _drop(){
+	drop();
+}
+
+table routing_table{
+	reads{
+		meta.routing_port: valid;
+	}
+	actions{
+		route;
+		_drop;
+	}
+	size: 1;
+}
+
+table clear_routing_table{
+	actions{
+		
+	}
+	size: 1;
+}
 
 
 //------------------------ Control Logic -----------------
@@ -76,11 +108,11 @@ table select_port_table{
 control ingress {
     if(load_balancer_head.flags == 0x01){
     	apply(select_port_table);
-    	apply()
+    	apply(update_routing_table);
     }
-    apply(route_packet_table);
+    apply(routing_table);
     if(load_balancer_head.flags == 0x02){
-    	apply(clear_port);
+    	apply(clear_routing_table);
     }
 }
 
