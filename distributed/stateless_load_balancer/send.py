@@ -41,9 +41,21 @@ def main():
     num_flows = 10
     for flow in range(num_flows):
         fid = HOSTNAME + " 0" + str(flow)
-        p = LoadBalancePkt(flags=0b11  , fid=fid) / str(fid)
+        p = LoadBalancePkt(flags=0b01  , fid=fid) / "SYN " + str(fid)
         print p.show()
-        # sendp(p, iface = "eth0")
+        sendp(p, iface = "eth0")
 
+    for flow in range(num_flows):
+        for i in range(100):
+            fid = HOSTNAME + " 0" + str(flow)
+            p = LoadBalancePkt(flags=0b00  , fid=fid) / str(fid) + " " + str(i)
+            print p.show()
+            sendp(p, iface = "eth0")
+
+    for flow in range(num_flows):
+        fid = HOSTNAME + " 0" + str(flow)
+        p = LoadBalancePkt(flags=0b10  , fid=fid) / "FIN" + str(fid)
+        print p.show()
+        sendp(p, iface = "eth0")
 if __name__ == '__main__':
     main()
