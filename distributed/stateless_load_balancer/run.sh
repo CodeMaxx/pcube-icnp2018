@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Copyright 2013-present Barefoot Networks, Inc. 
-# 
+# Copyright 2013-present Barefoot Networks, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #    http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
@@ -16,7 +16,7 @@
 
 THIS_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-source $THIS_DIR/../../../env.sh
+source $THIS_DIR/../../../../env.sh
 
 P4C_BM_SCRIPT=$P4C_BM_PATH/p4c_bm/__main__.py
 
@@ -24,10 +24,10 @@ SWITCH_PATH=$BMV2_PATH/targets/simple_switch/simple_switch
 
 CLI_PATH=$BMV2_PATH/tools/runtime_CLI.py
 rmpcap
-$P4C_BM_SCRIPT p4src/stateless_load_balancer.p4 --json stateless_load_balancer.json
+$P4C_BM_SCRIPT p4src/distributed_stateless_load_balancer.p4 --json distributed_stateless_load_balancer.json
 # This gives libtool the opportunity to "warm-up"
 sudo $SWITCH_PATH >/dev/null 2>&1
 sudo PYTHONPATH=$PYTHONPATH:$BMV2_PATH/mininet/ python topo.py \
     --behavioral-exe $SWITCH_PATH \
-    --json stateless_load_balancer.json \
+    --json distributed_stateless_load_balancer.json \
     --cli $CLI_PATH
