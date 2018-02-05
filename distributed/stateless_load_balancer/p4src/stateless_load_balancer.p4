@@ -36,7 +36,8 @@ header_type switch_info_t {
         flow_num: 32;
     }
 }
-header_type switch_info_t switch_info_head;
+
+header switch_info_t switch_info_head;
 
 header_type meta_t {
     fields {
@@ -45,6 +46,7 @@ header_type meta_t {
         routing_port: 32;
     }
 }
+
 metadata meta_t meta;
 
 // ---------------------- Hashing ------------------
