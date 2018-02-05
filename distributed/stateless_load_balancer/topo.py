@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
-# Copyright 2013-present Barefoot Networks, Inc. 
-# 
+# Copyright 2013-present Barefoot Networks, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #    http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
@@ -52,7 +52,7 @@ class MyTopo(Topo):
                                     thrift_port = _THRIFT_BASE_PORT + i,
                                     pcap_dump = True,
                                     device_id = i)
-        
+
         for h in xrange(nb_hosts):
             host = self.addHost('h%d' % (h + 1))
 
@@ -75,7 +75,7 @@ def read_topo():
             a, b = line.split()
             links.append( (a, b) )
     return int(nb_hosts), int(nb_switches), links
-            
+
 
 def main():
     nb_hosts, nb_switches, links = read_topo()
