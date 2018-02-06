@@ -46,6 +46,9 @@ header_type meta_t {
         min_flow_len : 32;
         flow_len1 : 32;
         flow_len2 : 32;
+
+        total_flow_count : 32;
+        hash: 32;
     }
 }
 metadata meta_t meta;
@@ -91,13 +94,6 @@ parser interswitch {
 
 //-----------------------------------------------------
 
-//---------------- Drop -------------------------------
-
-action _drop() {
-    drop();
-}
-
-//-----------------------------------------------------
 //------------------ Registers -----------------------
 
 register total_flow_count_register {
@@ -183,22 +179,26 @@ table min_flow_len_table2{
 // ---------------------------- Actions -----------------------
 
 action set_dest_port() {
-    register_read(meta.total_flow_count, total_flow_count_register, 0);
-    modify_field(standard_metadata.egress_spec, (meta.total_flow_count % SERVERS)+2);
-    add_to_field(meta.total_flow_count, 1);
-    register_write(total_flow_count_register, 0, meta.total_flow_count);
+    //to be done
 }
 
 action update_map() {
-
+    modify_field_with_hash_based_offset(meta.hash, 0,
+                                        flow_register_index, 16);
+    register_write(flow_to_port_map_register, meta.hash, standard_metadata.egress_spec);
 }
 
 action clear_map() {
-
+    modify_field_with_hash_based_offset(meta.hash, 0,
+                                        flow_register_index, 16);
+    register_write(flow_to_port_map_register, meta.hash, 0);
 }
 
 action forward() {
-
+    modify_field_with_hash_based_offset(meta.hash, 0,
+                                        flow_register_index, 16);
+    register_read(meta.routing_port, flow_to_port_map_register, meta.hash);
+    modify_field(standard_metadata.egress_spec, meta.routing_port);
 }
 
 action _drop() {
@@ -226,7 +226,7 @@ action update_min_flow_len1(){
 
 //------------------------ Control Logic -----------------
 
-control ingres {
+control ingress {
     if (load_balancer_head.preamble == 0x01){
         apply(update_switch_flow_count);
     }
