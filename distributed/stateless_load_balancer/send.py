@@ -27,10 +27,11 @@ import random
 HOSTNAME = sys.argv[1]
 
 class LoadBalancePkt(Packet):
-    name = "SrcRoute"
+    name = "LoadBalancePkt"
     fields_desc = [
         LongField("preamble", 0),
-        FlagsField("flags", 0, 2, ["syn", "fin"]),
+        IntField("syn", 0),
+        IntField("fin", 0),
         StrFixedLenField("fid", '', length=4),
         IntField("swid", 0),
         IntField("flow_num", 0)
@@ -41,20 +42,20 @@ def main():
     num_flows = 10
     for flow in range(num_flows):
         fid = HOSTNAME + " 0" + str(flow)
-        p = LoadBalancePkt(flags=0b01  , fid=fid) / ("SYN " + str(fid))
+        p = LoadBalancePkt(syn=1  , fid=fid) / ("SYN " + str(fid))
         print p.show()
         sendp(p, iface = "eth0")
 
     for flow in range(num_flows):
         for i in range(100):
             fid = HOSTNAME + " 0" + str(flow)
-            p = LoadBalancePkt(flags=0b00  , fid=fid) / (str(fid) + " " + str(i))
+            p = LoadBalancePkt(fid=fid) / (str(fid) + " " + str(i))
             print p.show()
             sendp(p, iface = "eth0")
 
     for flow in range(num_flows):
         fid = HOSTNAME + " 0" + str(flow)
-        p = LoadBalancePkt(flags=0b10  , fid=fid) / ("FIN" + str(fid))
+        p = LoadBalancePkt(fin=1  , fid=fid) / ("FIN" + str(fid))
         print p.show()
         sendp(p, iface = "eth0")
 if __name__ == '__main__':

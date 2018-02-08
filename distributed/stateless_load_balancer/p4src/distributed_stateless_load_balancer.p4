@@ -16,15 +16,14 @@
 // ------------------ Constants --------------------
 
 #define SERVERS 2
-#define SYN 1
-#define FIN 2
 
 // -------------------- Headers ------------------------
 
 header_type load_balancer_t {
     fields {
         preamble: 64;
-        flags: 2;
+        syn: 8;
+        fin: 8;
         fid: 32;
     }
 }
@@ -163,14 +162,14 @@ action _drop() {
 //------------------------ Control Logic -----------------
 
 control ingress {
-    if(load_balancer_head.flags == SYN) {
+    if(load_balancer_head.syn == 1) {
     	apply(set_dest_port_table);
     	apply(update_map_table);
     }
 
     apply(forwarding_table);
 
-    if(load_balancer_head.flags == FIN) {
+    if(load_balancer_head.fin == 1) {
     	apply(clear_map_table);
     }
 }
