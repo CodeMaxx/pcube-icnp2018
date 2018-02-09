@@ -49,7 +49,7 @@ def main():
     for flow in range(num_flows):
         for i in range(100):
             fid = HOSTNAME + " 0" + str(flow)
-            p = LoadBalancePkt(fid=fid) / (str(fid) + " " + str(i))
+            p = LoadBalancePkt(fid=fid) / ("Data:"+str(fid) + " " + str(i))
             print p.show()
             sendp(p, iface = "eth0")
 

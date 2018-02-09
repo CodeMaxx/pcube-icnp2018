@@ -22,8 +22,8 @@
 header_type load_balancer_t {
     fields {
         preamble: 64;
-        syn: 8;
-        fin: 8;
+        syn: 32;
+        fin: 32;
         fid: 32;
     }
 }
