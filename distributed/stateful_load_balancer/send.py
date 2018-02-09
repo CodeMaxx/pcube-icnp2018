@@ -33,6 +33,8 @@ class LoadBalancePkt(Packet):
         IntField("syn", 0),
         IntField("fin", 0),
         IntField("fid",0),
+        IntField("hash",0),
+        IntField("count",0),
         # StrFixedLenField("fid", '', length=4),
         IntField("swid", 0),
         IntField("flow_num", 0)
