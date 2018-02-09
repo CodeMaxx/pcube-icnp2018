@@ -24,14 +24,16 @@ import sys
 
 import random
 
-HOSTNAME = sys.argv[1]
+HOSTNAME = int(sys.argv[1])
 
 class LoadBalancePkt(Packet):
-    name = "SrcRoute"
+    name = "LoadBalancePkt"
     fields_desc = [
         LongField("preamble", 0),
-        FlagsField("flags", 0, 2, ["syn", "fin"]),
-        StrFixedLenField("fid", '', length=4),
+        IntField("syn", 0),
+        IntField("fin", 0),
+        IntField("fid",0),
+        # StrFixedLenField("fid", '', length=4),
         IntField("swid", 0),
         IntField("flow_num", 0)
     ]
@@ -40,21 +42,21 @@ class LoadBalancePkt(Packet):
 def main():
     num_flows = 10
     for flow in range(num_flows):
-        fid = HOSTNAME + " 0" + str(flow)
-        p = LoadBalancePkt(flags=0b01  , fid=fid) / "SYN " + str(fid)
+        fid = HOSTNAME*100+flow
+        p = LoadBalancePkt(syn=1  , fid=fid) / ("SYN-" + str(fid))
         print p.show()
         sendp(p, iface = "eth0")
 
     for flow in range(num_flows):
-        for i in range(100):
-            fid = HOSTNAME + " 0" + str(flow)
-            p = LoadBalancePkt(flags=0b00  , fid=fid) / str(fid) + " " + str(i)
+        for i in range(2):
+            fid = HOSTNAME*100+flow
+            p = LoadBalancePkt(fid=fid) / ("Data-"+str(fid) + "-" + str(i))
             print p.show()
             sendp(p, iface = "eth0")
 
     for flow in range(num_flows):
-        fid = HOSTNAME + " 0" + str(flow)
-        p = LoadBalancePkt(flags=0b10  , fid=fid) / "FIN" + str(fid)
+        fid = HOSTNAME*100+flow
+        p = LoadBalancePkt(fin=1  , fid=fid) / ("FIN-" + str(fid))
         print p.show()
         sendp(p, iface = "eth0")
 if __name__ == '__main__':

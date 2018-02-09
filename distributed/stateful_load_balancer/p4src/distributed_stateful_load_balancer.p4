@@ -16,15 +16,16 @@
 // ------------------ Constants --------------------
 
 #define SERVERS 2
-#define SYN 1
-#define FIN 2
+#define THRESHOLD 4
+#define SQTHRESHOLD 25
 
 // -------------------- Headers ------------------------
 
 header_type load_balancer_t {
     fields {
         preamble: 64;
-        flags: 2;
+        syn: 32;
+        fin: 32;
         fid: 32;
     }
 }
@@ -40,25 +41,26 @@ header switch_info_t switch_info_head;
 
 header_type meta_t {
     fields {
-        temp_reg : 32;
-        temp_reg2 : 32;
-        routing_port: 32;
-        min_flow_len : 32;
-        flow_len1 : 32;
-        flow_len2 : 32;
-
-        total_flow_count : 32;
+        temp : 32;
+        
+        server_flow1 : 32;
+        server_flow2 : 32;
+        switch_flow1 : 32;
+        switch_flow2 : 32;
+        switch_flow3 : 32;
+        
         hash: 32;
+        routing_port: 32;
+
+        min_flow_len : 32;
     }
 }
 metadata meta_t meta;
 
-//-----------------------------------------------------
-
 // ---------------------- Hashing ------------------
 
 field_list flow_list {
-    load_balancer_t.fid;
+    load_balancer_head.fid;
 }
 
 field_list_calculation flow_register_index {
@@ -68,8 +70,6 @@ field_list_calculation flow_register_index {
     algorithm : csum16;
     output_width : 16;
 }
-
-//-----------------------------------------------------
 
 //-------------------- Parsers ------------------------
 
@@ -92,8 +92,6 @@ parser interswitch {
     return ingress;
 }
 
-//-----------------------------------------------------
-
 //------------------ Registers -----------------------
 
 register total_flow_count_register {
@@ -106,30 +104,67 @@ register flow_to_port_map_register {
     instance_count: 65536;
 }
 
-//------------------------------------------------------
-
 // --------------------- Tables -------------------------------
 
-// Do all calculations for selecting port
-table set_dest_port_table {
-    actions {
-        set_dest_port;
+// Update the switch_flow_count
+table update_switch_flow_count_table {
+    actions{
+        update_switch_flow_count;
     }
     size: 1;
+}
+
+//Set destination tables
+table get_server_flow_count_table{
+    actions{
+        get_server_flow_count;
+    }
+    size:1;
+}
+
+table set_server_dest_port_table{
+    reads{
+        meta.server_flow1 : exact;
+        meta.server_flow2 : exact;
+    }
+    actions{
+        set_server_dest_port;
+    }
+    size:SQTHRESHOLD;
+}
+
+table get_switch_flow_count_table{
+    actions{
+        get_switch_flow_count;
+    }
+    size:1;
+}
+
+table set_switch1_dest_port_table{
+    actions{
+        set_switch1_dest_port;
+    }
+    size:1;
+}
+
+table set_switch2_dest_port_table{
+    actions{
+        set_switch2_dest_port;
+    }
+    size:1;
+}
+
+table set_switch3_dest_port_table{
+    actions{
+        set_switch3_dest_port;
+    }
+    size:1;
 }
 
 // Updates flow_to_port_map_register on a SYN packet
 table update_map_table {
     actions {
         update_map;
-    }
-    size: 1;
-}
-
-// Clears flow_to_port_map_register on a FIN packet
-table clear_map_table {
-    actions {
-        clear_map;
     }
     size: 1;
 }
@@ -145,16 +180,38 @@ table forwarding_table {
     }
     size: 1;
 }
-    
+
+// Clears flow_to_port_map_register on a FIN packet
+table clear_map_table {
+    actions {
+        clear_map;
+    }
+    size: 1;
+}
+
 // Update the server_flow_count
-table update_switch_flow_count_table {
+table update_flow_count_table {
     actions{
-        update_switch_flow_count;
+        update_flow_count;
     }
     size: 1;
 }
 
 // Send the update message regarding flow info to other switches
+table update_min_flow_len1_table{
+    actions{
+        update_min_flow_len1;
+    }
+    size: 1;
+}
+
+table update_min_flow_len2_table{
+    actions{
+        update_min_flow_len2;
+    }
+    size: 1;
+}
+
 table send_update_message_table {
     actions{
         send_update_message;
@@ -162,38 +219,55 @@ table send_update_message_table {
     size: 1;
 }
 
-table min_flow_len_table1{
-    actions{
-        update_min_flow_len1;
-    }
-    size: 1;
-}
 
-table min_flow_len_table2{
-    actions{
-        update_min_flow_len2;
-    }
-    size: 1;
-}
 
 // ---------------------------- Actions -----------------------
 
-action set_dest_port() {
-    //to be done
+//Update switch flow count
+action update_switch_flow_count() {
+    register_write(total_flow_count_register,standard_metadata.ingress_port - 2, switch_info_head.flow_num);
 }
 
+//Set destination actions
+action get_server_flow_count(){
+    register_read(meta.server_flow1,total_flow_count_register,0);
+    register_read(meta.server_flow2,total_flow_count_register,1);
+}
+
+action set_server_dest_port(flow_count,flow_dest){
+    register_write(total_flow_count_register,flow_dest - 2, flow_count + 1);
+    modify_field(standard_metadata.egress_spec,flow_dest);
+}
+
+action get_switch_flow_count(){
+    register_read(meta.switch_flow1,total_flow_count_register,2);
+    register_read(meta.switch_flow2,total_flow_count_register,3);
+    register_read(meta.switch_flow3,total_flow_count_register,4);
+}
+
+action set_switch1_dest_port(){
+    register_write(total_flow_count_register,2, meta.switch_flow1 + 1);
+    modify_field(standard_metadata.egress_spec,4);
+}
+
+action set_switch2_dest_port(){
+    register_write(total_flow_count_register,3, meta.switch_flow2 + 1);
+    modify_field(standard_metadata.egress_spec,5);
+}
+
+action set_switch3_dest_port(){
+    register_write(total_flow_count_register,4, meta.switch_flow3 + 1);
+    modify_field(standard_metadata.egress_spec,6);
+}
+
+//Update mapping
 action update_map() {
     modify_field_with_hash_based_offset(meta.hash, 0,
                                         flow_register_index, 16);
     register_write(flow_to_port_map_register, meta.hash, standard_metadata.egress_spec);
 }
 
-action clear_map() {
-    modify_field_with_hash_based_offset(meta.hash, 0,
-                                        flow_register_index, 16);
-    register_write(flow_to_port_map_register, meta.hash, 0);
-}
-
+//Forward
 action forward() {
     modify_field_with_hash_based_offset(meta.hash, 0,
                                         flow_register_index, 16);
@@ -205,54 +279,105 @@ action _drop() {
     drop();
 }
 
-action update_switch_flow_count(port_num) {
-    register_write(flow_count_register,standard_metadata.ingress_port - 3, switch_info_head.flow_num);
+//Clear mapping
+action clear_map() {
+    modify_field_with_hash_based_offset(meta.hash, 0,
+                                        flow_register_index, 16);
+    register_write(flow_to_port_map_register, meta.hash, 0);
+}
+
+action update_flow_count() {
+    register_read(meta.temp, total_flow_count_register, meta.routing_port-2);
+    add_to_field(meta.temp,-1);
+    register_write(total_flow_count_register,meta.routing_port-2, meta.temp);
+    modify_field(load_balancer_head.syn,meta.temp);
+    modify_field(load_balancer_head.fin,meta.routing_port-2);
+}
+
+action update_min_flow_len1(){
+    modify_field(meta.min_flow_len, meta.server_flow1);
+}
+
+action update_min_flow_len2(){
+    modify_field(meta.min_flow_len, meta.server_flow2);
+}
+
+field_list empty {
+    standard_metadata;
 }
 
 action send_update_message(){
     modify_field(load_balancer_head.preamble, 1);
-    modify_field(switch_info_head.flow_num, meta.min_flow_len);  
+    modify_field(meta.temp,meta.routing_port);
+    modify_field(switch_info_head.flow_num, meta.min_flow_len);
+    modify_field(standard_metadata.egress_spec,3);
+    //clone_egress_pkt_to_egress(3,empty);
+    modify_field(standard_metadata.egress_spec,4);
+    //clone_egress_pkt_to_egress(4,empty);
+    modify_field(standard_metadata.egress_spec,5);
+    //clone_egress_pkt_to_egress(5,empty);
+    modify_field(load_balancer_head.preamble, 0);
+    modify_field(meta.routing_port,meta.temp);
 }
 
-action update_min_flow_len2(){
-    modify_field(meta.min_flow_len, meta.flow_len2);
-}
 
-action update_min_flow_len1(){
-    modify_field(meta.min_flow_len, meta.flow_len1);
-}
-
-//-------------------------------------------------------
 
 //------------------------ Control Logic -----------------
 
 control ingress {
-    if (load_balancer_head.preamble == 0x01){
-        apply(update_switch_flow_count);
+    if (load_balancer_head.preamble == 1){
+        apply(update_switch_flow_count_table);
     }
-
     else {
-        if(load_balancer_head.flags == SYN) {
-            apply(set_dest_port_table);
+        //Start of flow
+        if(load_balancer_head.syn == 1) {
+
+            apply(get_server_flow_count_table);
+            if(meta.server_flow1 < THRESHOLD or meta.server_flow2 < THRESHOLD){
+                //Forwarding can be done locally
+                apply(set_server_dest_port_table);
+            }
+            else{
+                //Choose from switches
+                apply(get_switch_flow_count_table);
+                if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3){
+                    apply(set_switch1_dest_port_table);
+                }
+                else if(meta.switch_flow2 <= meta.switch_flow1 and meta.switch_flow2 <= meta.switch_flow3){
+                    apply(set_switch2_dest_port_table);
+                }
+                else if(meta.switch_flow3 <= meta.switch_flow1 and meta.switch_flow3 <= meta.switch_flow2){
+                    apply(set_switch3_dest_port_table);
+                }
+            }
+
+            //Update mapping
             apply(update_map_table);
         }
 
+        //Forwarding
         apply(forwarding_table);
 
-        if(load_balancer_head.flags == FIN) {
+        //End of flow
+        if(load_balancer_head.fin == 1) {
             apply(clear_map_table);
-        
-            if (meta.flow_len1 < meta.flow_len2){
-                apply(min_flow_len_table1);
-            }
-            else{
-                apply(min_flow_len_table2);
-            }
-        
-            apply(send_update_message_table);
+            apply(update_flow_count_table);           
         }
     }
 }
 
 control egress {
+    /*if(load_balancer_head.preamble == 0 and load_balancer_head.fin == 1) {
+
+            if(meta.routing_port == 2 or meta.routing_port == 3){
+                apply(get_server_flow_count_table);
+                if(meta.server_flow1 < meta.server_flow2){
+                    apply(update_min_flow_len1_table);
+                }
+                else{
+                    apply(update_min_flow_len2_table);
+                }
+                apply(send_update_message_table);
+            } 
+        }*/
 }
