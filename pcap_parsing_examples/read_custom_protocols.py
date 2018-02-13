@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2013-present Barefoot Networks, Inc.
+# Copyright 2018-present Akash Trehan
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,18 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from scapy.all import sniff, sendp
+########################################################
+# 1. How to read packets for custom protocols
+########################################################
+
+from scapy.all import rdpcap
 from scapy.all import Packet
 from scapy.all import IntField, LongField
 
-import networkx as nx
+# Print helper function
+def cprint(str):
+    print("\n" + "-"*25 + " " + str + " " + "-"*25 + "\n")
 
-import sys
-
-import random
-
-HOSTNAME = int(sys.argv[1])
-
+# Defining a custom protocol layer
 class LoadBalancePkt(Packet):
     name = "LoadBalancePkt"
     fields_desc = [
@@ -35,31 +36,21 @@ class LoadBalancePkt(Packet):
         IntField("fid",0),
         IntField("hash",0),
         IntField("count",0),
-        # StrFixedLenField("fid", '', length=4),
         IntField("swid", 0),
         IntField("flow_num", 0)
     ]
 
+# Read all the packets from a pcap file in the form of a list
+packets = rdpcap('s1-eth1_out.pcap')
 
-def main():
-    num_flows = 10
-    for flow in range(num_flows):
-        fid = HOSTNAME*100+flow
-        p = LoadBalancePkt(syn=1  , fid=fid) / ("SYN-" + str(fid))
-        print p.show()
-        sendp(p, iface = "eth0")
+# I know beforehand that the packet `packets[32]` is a packet adhering to our protocol
+p1 = packets[32].copy()
 
-    for flow in range(num_flows):
-        for i in range(2):
-            fid = HOSTNAME*100+flow
-            p = LoadBalancePkt(fid=fid) / ("Data-"+str(fid) + "-" + str(i))
-            print p.show()
-            sendp(p, iface = "eth0")
+# Getting the packet as raw bytes
+p1_bytes = bytes(p1)
 
-    for flow in range(num_flows):
-        fid = HOSTNAME*100+flow
-        p = LoadBalancePkt(fin=1  , fid=fid) / ("FIN-" + str(fid))
-        print p.show()
-        sendp(p, iface = "eth0")
-if __name__ == '__main__':
-    main()
+# Convert the bytes into a custom protocol packet. Now all the packet functions are applicable on this
+p2 = LoadBalancePkt(p1_bytes)
+
+cprint("Custom protocol packet read from pcap")
+p2.show()
