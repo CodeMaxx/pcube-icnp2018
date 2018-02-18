@@ -85,6 +85,7 @@ parser start {
 
 parser parse_head {
     extract(load_balancer_head);
+    extract(switch_info_head);
     return ingress;
 }
 
@@ -214,9 +215,23 @@ table update_min_flow_len2_table{
     size: 1;
 }
 
-table duplicate_packet_table {
+table duplicate_packet_table1 {
     actions{
-        duplicate_packet;
+        duplicate_packet1;
+    }
+    size: 1;
+}
+
+table duplicate_packet_table2 {
+    actions{
+        duplicate_packet2;
+    }
+    size: 1;
+}
+
+table duplicate_packet_table3 {
+    actions{
+        duplicate_packet3;
     }
     size: 1;
 }
@@ -283,6 +298,8 @@ action forward() {
     register_read(meta.routing_port, flow_to_port_map_register, meta.hash);
     modify_field(standard_metadata.egress_spec, meta.routing_port);
     modify_field(load_balancer_head.hash,meta.hash);
+    modify_field(load_balancer_head._count,standard_metadata.instance_type);
+
 }
 
 action _drop() {
@@ -301,7 +318,6 @@ action update_flow_count() {
     register_read(meta.temp, total_flow_count_register, meta.routing_port-2);
     add_to_field(meta.temp,-1);
     register_write(total_flow_count_register,meta.routing_port-2, meta.temp);
-    modify_field(load_balancer_head._count,meta.temp);
 }
 
 action update_min_flow_len1(){
@@ -317,19 +333,27 @@ field_list meta_list {
     standard_metadata;
 }
 
-action duplicate_packet(){
+action duplicate_packet1(){
     modify_field(meta.temp,standard_metadata.egress_spec);
-    modify_field(standard_metadata.egress_spec,4);
     clone_ingress_pkt_to_egress(4,meta_list);
-    modify_field(standard_metadata.egress_spec,5);
+    modify_field(standard_metadata.egress_spec,meta.temp);
+}
+
+action duplicate_packet2(){
+    modify_field(meta.temp,standard_metadata.egress_spec);
     clone_ingress_pkt_to_egress(5,meta_list);
-    modify_field(standard_metadata.egress_spec,6);
+    modify_field(standard_metadata.egress_spec,meta.temp);
+}
+
+action duplicate_packet3(){
+    modify_field(meta.temp,standard_metadata.egress_spec);
     clone_ingress_pkt_to_egress(6,meta_list);
     modify_field(standard_metadata.egress_spec,meta.temp);
 }
 
 action send_update(){
     modify_field(load_balancer_head.preamble,1);
+    modify_field(switch_info_head.swid,standard_metadata.egress_port);
     modify_field(switch_info_head.flow_num,meta.min_flow_len);
 }
 
@@ -379,14 +403,16 @@ control ingress {
                 else{
                     apply(update_min_flow_len2_table);
                 }
-                apply(duplicate_packet_table);
+                apply(duplicate_packet_table1);
+                apply(duplicate_packet_table3);
+                apply(duplicate_packet_table2);
             }    
         }
     }
 }
 
 control egress {
-    if(standard_metadata.instance_type == 1){
+    if (standard_metadata.instance_type == 1){
         apply(send_update_table);
     }
 }

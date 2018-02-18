@@ -25,8 +25,9 @@ P4C_BM_SCRIPT=$P4C_BM_PATH/p4c_bm/__main__.py
 
 SWITCH_PATH=$BMV2_PATH/targets/simple_switch/simple_switch
 
-CLI_PATH=$BMV2_PATH/tools/runtime_CLI.py
-
+# CLI_PATH=$BMV2_PATH/tools/runtime_CLI.py
+CLI_PATH=$BMV2_PATH/tools/modified_runtime_CLI.py
+# CLI_PATH=$BMV2_PATH/targets/simple_switch/sswitch_CLI.py
 
 $P4C_BM_SCRIPT p4src/distributed_stateful_load_balancer.p4 --json distributed_stateful_load_balancer.json
 # This gives libtool the opportunity to "warm-up"
