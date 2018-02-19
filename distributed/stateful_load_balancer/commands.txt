@@ -1,3 +1,10 @@
+mc_mgrp_create 1 
+mc_node_create 0 4
+mc_node_create 1 5
+mc_node_create 2 6
+mc_node_associate 1 0
+mc_node_associate 1 1
+mc_node_associate 1 2
 table_set_default update_switch_flow_count_table update_switch_flow_count
 table_set_default get_server_flow_count_table get_server_flow_count
 table_set_default set_server_dest_port_table set_server_dest_port
@@ -35,10 +42,9 @@ table_set_default clear_map_table clear_map
 table_set_default update_flow_count_table update_flow_count
 table_set_default update_min_flow_len1_table update_min_flow_len1
 table_set_default update_min_flow_len2_table update_min_flow_len2
-table_set_default duplicate_packet_table1 duplicate_packet1
-table_set_default duplicate_packet_table2 duplicate_packet2
-table_set_default duplicate_packet_table3 duplicate_packet3
-table_set_default send_update_table send_update 
+table_set_default send_update_table send_update
+mirroring_add 2 2
+mirroring_add 3 3
 mirroring_add 4 4
 mirroring_add 5 5
 mirroring_add 6 6
