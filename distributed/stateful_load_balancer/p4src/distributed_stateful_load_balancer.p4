@@ -77,7 +77,7 @@ field_list_calculation flow_register_index {
     input {
         flow_list;
     }
-    algorithm : csum16;
+    algorithm : crc16;
     output_width : 16;
 }
 
@@ -273,14 +273,14 @@ action set_switch3_dest_port(){
 //Update mapping
 action update_map() {
     modify_field_with_hash_based_offset(meta.hash, 0,
-                                        flow_register_index, 16);
+                                        flow_register_index, 65536);
     register_write(flow_to_port_map_register, meta.hash, standard_metadata.egress_spec);
 }
 
 //Forward
 action forward() {
     modify_field_with_hash_based_offset(meta.hash, 0,
-                                        flow_register_index, 16);
+                                        flow_register_index, 65536);
     register_read(meta.routing_port, flow_to_port_map_register, meta.hash);
     modify_field(standard_metadata.egress_spec, meta.routing_port);
     modify_field(load_balancer_head.hash,meta.hash);
@@ -294,7 +294,7 @@ action _drop() {
 //Clear mapping
 action clear_map() {
     modify_field_with_hash_based_offset(meta.hash, 0,
-                                        flow_register_index, 16);
+                                        flow_register_index, 65536);
     register_write(flow_to_port_map_register, meta.hash, 0);
 }
 
