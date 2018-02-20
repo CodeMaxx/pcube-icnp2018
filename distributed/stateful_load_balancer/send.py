@@ -9,7 +9,7 @@ from random import uniform
 import threading
 from time import sleep
 
-if len(sys.argv) < 2: 
+if len(sys.argv) < 2:
 	print("./send.py <client ID>")
 	exit(0)
 HOSTNAME = int(sys.argv[1])
@@ -17,7 +17,7 @@ IFACE = "eth0"
 FLOW_THRESHOLD = 30
 MIN_SLEEP, MAX_SLEEP = 0.01,0.3
 MIN_PACKET_NUM, MAX_PACKET_NUM = 4, 30
-MIN_PACKET_LENGTH, MAX_PACKET_LENGTH = 0,20 
+MIN_PACKET_LENGTH, MAX_PACKET_LENGTH = 1,20
 
 class LoadBalancePkt(Packet):
 	name = "LoadBalancePkt"
@@ -33,7 +33,7 @@ class LoadBalancePkt(Packet):
 	]
 
 class Flow(threading.Thread):
-	
+
 	def __init__(self, fid, delay):
 		threading.Thread.__init__(self)
 		self.fid = fid
@@ -41,7 +41,7 @@ class Flow(threading.Thread):
 
 	def run(self):
 		fid,delay = self.fid, self.delay
-		
+
 		payload = "SYN-" + str(fid)
 		p = LoadBalancePkt(syn=1  , fid=fid) / payload
 		print 'syn'+str(fid)
@@ -52,7 +52,7 @@ class Flow(threading.Thread):
 		# print(fid)
 		for i in range(int(uniform(MIN_PACKET_NUM,MAX_PACKET_NUM))):
 			payload = "Data-"+str(fid) + "-" + ((str(i)+'-')*int(uniform(MIN_PACKET_LENGTH,MAX_PACKET_LENGTH)))
-			p = LoadBalancePkt(fid=fid) / payload 
+			p = LoadBalancePkt(fid=fid) / payload
 			print p.show()
 			sleep(delay)
 			sendp(p, iface = IFACE)
@@ -78,7 +78,7 @@ def main():
 		except:
 		   print "Error: unable to start flow"
 
-	for t in threads: 
+	for t in threads:
 		t.join()
 
 if __name__ == '__main__':

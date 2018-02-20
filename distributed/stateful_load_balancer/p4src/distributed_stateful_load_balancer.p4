@@ -44,13 +44,13 @@ header switch_info_t switch_info_head;
 header_type meta_t {
     fields {
         temp : 32;
-        
+
         server_flow1 : 32;
         server_flow2 : 32;
         switch_flow1 : 32;
         switch_flow2 : 32;
         switch_flow3 : 32;
-        
+
         hash: 16;
         routing_port: 32;
 
@@ -364,7 +364,7 @@ control ingress {
         //End of flow
         if(load_balancer_head.fin == 1) {
             apply(clear_map_table);
-            apply(update_flow_count_table); 
+            apply(update_flow_count_table);
             if(meta.routing_port == 2 or meta.routing_port == 3 ){
                 if(meta.server_flow1 < meta.server_flow2){
                     apply(update_min_flow_len1_table);
@@ -373,7 +373,7 @@ control ingress {
                     apply(update_min_flow_len2_table);
                 }
                 apply(send_update_table);
-            }    
+            }
         }
     }
 }

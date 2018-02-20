@@ -14,19 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-########################################################
-# 1. How to read packets for custom protocols
-########################################################
-
-from scapy.all import rdpcap
 from scapy.all import Packet
 from scapy.all import IntField, LongField
+
+NUM_SWITCHES = 4
+NUM_PORTS = 6
+PCAP_BASE_DIRECTORY = "pcap/"
+SWITCH_PORTS = [4,5,6]
+SERVER_PORTS = [2,3]
+USER_PORTS = [1]
 
 # Print helper function
 def cprint(str):
     print("\n" + "-"*25 + " " + str + " " + "-"*25 + "\n")
 
-# Defining a custom protocol layer
+# Find the index of nth occurance of a substring
+def nfind(string, substr, num):
+    return string.replace(substr, "\xff"*len(substr), num).find(substr)
+
 class LoadBalancePkt(Packet):
     name = "LoadBalancePkt"
     fields_desc = [
@@ -39,19 +44,3 @@ class LoadBalancePkt(Packet):
         IntField("swid", 0),
         IntField("flow_num", 0)
     ]
-
-# Read all the packets from a pcap file in the form of a list
-packets = rdpcap('s1-eth1_out.pcap')
-
-# I know beforehand that the packet `packets[32]` is a packet adhering to our protocol
-p1 = packets[32].copy()
-
-# Getting the packet as raw bytes
-p1_bytes = bytes(p1)
-
-# Convert the bytes into a custom protocol packet. Now all the packet functions are applicable on this
-### Note(Akash): This conversion updates the timestamp of the packet, so p2.time != p1.time
-p2 = LoadBalancePkt(p1_bytes)
-
-cprint("Custom protocol packet read from pcap")
-p2.show()
