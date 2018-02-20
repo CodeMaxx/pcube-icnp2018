@@ -1,7 +1,7 @@
 import decision_time
 import data_forwarding_time
 import num_probe_packets
-import link_traffic.py
+import link_traffic
 
 from utils import *
 
