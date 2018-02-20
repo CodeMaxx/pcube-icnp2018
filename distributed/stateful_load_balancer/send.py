@@ -1,65 +1,85 @@
 #!/usr/bin/python
 
-# Copyright 2013-present Barefoot Networks, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 from scapy.all import sniff, sendp
 from scapy.all import Packet
 from scapy.all import IntField, LongField
 
-import networkx as nx
-
 import sys
+from random import uniform
+import threading
+from time import sleep
 
-import random
-
+if len(sys.argv) < 2: 
+	print("./send.py <client ID>")
+	exit(0)
 HOSTNAME = int(sys.argv[1])
+IFACE = "eth0"
+FLOW_THRESHOLD = 30
+MIN_SLEEP, MAX_SLEEP = 0.01,0.3
+MIN_PACKET_NUM, MAX_PACKET_NUM = 4, 30
+MIN_PACKET_LENGTH, MAX_PACKET_LENGTH = 0,20 
 
 class LoadBalancePkt(Packet):
-    name = "LoadBalancePkt"
-    fields_desc = [
-        LongField("preamble", 0),
-        IntField("syn", 0),
-        IntField("fin", 0),
-        IntField("fid",0),
-        IntField("hash",0),
-        IntField("count",0),
-        # StrFixedLenField("fid", '', length=4),
-        IntField("swid", 0),
-        IntField("flow_num", 0)
-    ]
+	name = "LoadBalancePkt"
+	fields_desc = [
+		LongField("preamble", 0),
+		IntField("syn", 0),
+		IntField("fin", 0),
+		IntField("fid",0),
+		IntField("hash",0),
+		IntField("count",0),
+		IntField("swid", 0),
+		IntField("flow_num", 0)
+	]
 
+class Flow(threading.Thread):
+	
+	def __init__(self, fid, delay):
+		threading.Thread.__init__(self)
+		self.fid = fid
+		self.delay = delay
+
+	def run(self):
+		fid,delay = self.fid, self.delay
+		
+		payload = "SYN-" + str(fid)
+		p = LoadBalancePkt(syn=1  , fid=fid) / payload
+		print 'syn'+str(fid)
+		print p.show()
+		sleep(delay)
+		sendp(p, iface = IFACE)
+
+		# print(fid)
+		for i in range(int(uniform(MIN_PACKET_NUM,MAX_PACKET_NUM))):
+			payload = "Data-"+str(fid) + "-" + ((str(i)+'-')*int(uniform(MIN_PACKET_LENGTH,MAX_PACKET_LENGTH)))
+			p = LoadBalancePkt(fid=fid) / payload 
+			print p.show()
+			sleep(delay)
+			sendp(p, iface = IFACE)
+
+		payload = "FIN-" + str(fid)
+		p = LoadBalancePkt(fin=1  , fid=fid) / payload
+		print p.show()
+		sleep(delay)
+		sendp(p, iface = IFACE)
 
 def main():
-    num_flows = 10
-    for flow in range(num_flows):
-        fid = HOSTNAME*100+flow
-        p = LoadBalancePkt(syn=1  , fid=fid) / ("SYN-" + str(fid))
-        print p.show()
-        sendp(p, iface = "eth0")
+	flow_count = 0
 
-    for flow in range(num_flows):
-        for i in range(2):
-            fid = HOSTNAME*100+flow
-            p = LoadBalancePkt(fid=fid) / ("Data-"+str(fid) + "-" + str(i))
-            print p.show()
-            sendp(p, iface = "eth0")
+	threadLock = threading.Lock()
+	threads = []
 
-    for flow in range(num_flows):
-        fid = HOSTNAME*100+flow
-        p = LoadBalancePkt(fin=1  , fid=fid) / ("FIN-" + str(fid))
-        print p.show()
-        sendp(p, iface = "eth0")
+	while flow_count != FLOW_THRESHOLD:
+		try:
+		   t = Flow(flow_count, uniform(MIN_SLEEP, MAX_SLEEP))
+		   t.start()
+		   threads.append(t)
+		   flow_count+=1
+		except:
+		   print "Error: unable to start flow"
+
+	for t in threads: 
+		t.join()
+
 if __name__ == '__main__':
-    main()
+	main()
