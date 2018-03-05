@@ -329,27 +329,13 @@ action send_update(){
 //------------------------ Control Logic -----------------
 
 control ingress {
-    apply(get_server_flow_count_table);  
     if (load_balancer_head.preamble == 1){
-        //send update
-        if(meta.server_flow1 < meta.server_flow2){
-            apply(update_min_flow_len1_table);
-        }
-        else{
-            apply(update_min_flow_len2_table);
-        }
-        apply(send_update_table);
-    }
-    else if (load_balancer_head.preamble == 2){
-        //get update
         apply(update_switch_flow_count_table);
     }
     else {
         //Start of flow
+        apply(get_server_flow_count_table);     //['get_server_flow_count_table'] invoked multiple times
         if(load_balancer_head.syn == 1) {
-
-            //Take decision to send probe packet or not
-
             if(meta.server_flow1 < THRESHOLD or meta.server_flow2 < THRESHOLD){
                 //Forwarding can be done locally
                 apply(set_server_dest_port_table);
@@ -379,6 +365,15 @@ control ingress {
         if(load_balancer_head.fin == 1) {
             apply(clear_map_table);
             apply(update_flow_count_table);
+            if(meta.routing_port == 2 or meta.routing_port == 3){
+                if(meta.server_flow1 < meta.server_flow2){
+                    apply(update_min_flow_len1_table);
+                }
+                else{
+                    apply(update_min_flow_len2_table);
+                }
+                apply(send_update_table);
+            }
         }
     }
 }

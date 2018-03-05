@@ -15,6 +15,7 @@
 
 // ------------------ Constants --------------------
 
+#define LIMIT 8
 #define SERVERS 2
 #define THRESHOLD 4
 #define SQTHRESHOLD 25
@@ -55,6 +56,8 @@ header_type meta_t {
         routing_port: 32;
 
         min_flow_len : 32;
+
+        probe_bool : 32;
     }
 }
 metadata meta_t meta;
@@ -231,6 +234,20 @@ table send_update_table {
     size: 1;
 }
 
+table send_probe_table {
+    actions{
+        send_probe;
+    }
+    size: 1;
+}
+
+table set_probe_bool_table {
+    actions{
+        set_probe_bool;
+    }
+    size: 1;
+}
+
 // ---------------------------- Actions -----------------------
 
 //Update switch flow count
@@ -319,8 +336,19 @@ field_list meta_list {
 }
 
 action send_update(){
+    modify_field(load_balancer_head.preamble,2);
+    modify_field(switch_info_head.swid,16);
+    modify_field(switch_info_head.flow_num,meta.min_flow_len);
+    modify_field(standard_metadata.egress_spec, standard_metadata.ingress_port);
+}
+
+action set_probe_bool(){
+    modify_field(meta.probe_bool,1);
+}
+
+action send_probe(){
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
-    modify_field(load_balancer_head.preamble,1);
+    modify_field(load_balancer_head.preamble, 1);
     modify_field(switch_info_head.swid,16);
     modify_field(switch_info_head.flow_num,meta.min_flow_len);
     modify_field(intrinsic_metadata.mcast_grp, 1);
@@ -329,16 +357,33 @@ action send_update(){
 //------------------------ Control Logic -----------------
 
 control ingress {
+    apply(get_server_flow_count_table);  
     if (load_balancer_head.preamble == 1){
+        //send update
+        if(meta.server_flow1 < meta.server_flow2){
+            apply(update_min_flow_len1_table);
+        }
+        else{
+            apply(update_min_flow_len2_table);
+        }
+        apply(send_update_table);
+    }
+    else if (load_balancer_head.preamble == 2){
+        //get update
         apply(update_switch_flow_count_table);
     }
     else {
         //Start of flow
-        apply(get_server_flow_count_table);     //['get_server_flow_count_table'] invoked multiple times
         if(load_balancer_head.syn == 1) {
+
             if(meta.server_flow1 < THRESHOLD or meta.server_flow2 < THRESHOLD){
                 //Forwarding can be done locally
                 apply(set_server_dest_port_table);
+
+                //Take decision to send probe packet or not
+                if ((meta.server_flow1 + meta.server_flow2)*10 > (LIMIT * 2 * THRESHOLD)){
+                    apply(set_probe_bool_table);
+                }
             }
             else{
                 //Choose from switches
@@ -361,19 +406,14 @@ control ingress {
         //Forwarding
         apply(forwarding_table);
 
+        if(meta.probe_bool == 1){
+            apply(send_probe_table);
+        }
+
         //End of flow
         if(load_balancer_head.fin == 1) {
             apply(clear_map_table);
             apply(update_flow_count_table);
-            if(meta.routing_port == 2 or meta.routing_port == 3 ){
-                if(meta.server_flow1 < meta.server_flow2){
-                    apply(update_min_flow_len1_table);
-                }
-                else{
-                    apply(update_min_flow_len2_table);
-                }
-                apply(send_update_table);
-            }
         }
     }
 }
