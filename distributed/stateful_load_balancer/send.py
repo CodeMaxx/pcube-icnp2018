@@ -14,7 +14,7 @@ if len(sys.argv) < 2:
 	exit(0)
 HOSTNAME = int(sys.argv[1])
 IFACE = "eth0"
-FLOW_THRESHOLD = 10
+FLOW_THRESHOLD = 50
 MIN_SLEEP, MAX_SLEEP = 0.01,0.3
 MIN_PACKET_NUM, MAX_PACKET_NUM = 4, 30
 MIN_PACKET_LENGTH, MAX_PACKET_LENGTH = 1,20
@@ -73,7 +73,7 @@ def main():
 
 	while flow_count != FLOW_THRESHOLD:
 		try:
-		   t = Flow(flow_count, uniform(MIN_SLEEP, MAX_SLEEP))
+		   t = Flow((HOSTNAME * FLOW_THRESHOLD) + flow_count, uniform(MIN_SLEEP, MAX_SLEEP))
 		   t.start()
 		   threads.append(t)
 		   flow_count+=1
