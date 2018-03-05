@@ -16,6 +16,7 @@
 
 from scapy.all import Packet
 from scapy.all import IntField, LongField
+import os
 
 NUM_SWITCHES = 4
 NUM_PORTS = 6
@@ -31,6 +32,9 @@ def cprint(str):
 # Find the index of nth occurance of a substring
 def nfind(string, substr, num):
     return string.replace(substr, "\xff"*len(substr), num).find(substr)
+
+def check_empty_file(filepath):
+    return os.stat(filepath).st_size == 0
 
 class LoadBalancePkt(Packet):
     name = "LoadBalancePkt"

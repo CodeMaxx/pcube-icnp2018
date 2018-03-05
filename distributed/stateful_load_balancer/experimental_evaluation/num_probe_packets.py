@@ -28,7 +28,10 @@ def num_probe_packets():
     for i in range(1, NUM_SWITCHES + 1):
         num = 0
         for j in SWITCH_PORTS:
-            outgoing_packets = rdpcap("pcap/s%d-eth%d_in.pcap" % (i, j))
+            try:
+                outgoing_packets = rdpcap("pcap/s%d-eth%d_in.pcap" % (i, j))
+            except:
+                continue
             probe_packets = filter(lambda packet: packet[0]['LoadBalancePkt'].preamble == 1 and packet[0]['LoadBalancePkt'].fin == 1, [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
             num += len(list(probe_packets))
         print("Probe packets sent by switch %d: %d" % (i, num))

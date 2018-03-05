@@ -28,10 +28,16 @@ def avg_data_forwarding_time():
     num_data_packets = 0
 
     for i in range(1, NUM_SWITCHES + 1):
-        host_packets = rdpcap("pcap/s%d-eth1_out.pcap" % i)
+        try:
+            host_packets = rdpcap("pcap/s%d-eth1_out.pcap" % i)
+        except:
+            continue
         all_outgoing_flow_packets = []
         for j in range(2, NUM_PORTS + 1):
-            outgoing_packets = rdpcap("pcap/s%d-eth%d_in.pcap" % (i, j))
+            try:
+                outgoing_packets = rdpcap("pcap/s%d-eth%d_in.pcap" % (i, j))
+            except:
+                continue
             all_outgoing_flow_packets += filter(lambda packet: packet[0]['Raw'].load.startswith(b"Data"), [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
 
         for packet in host_packets:
