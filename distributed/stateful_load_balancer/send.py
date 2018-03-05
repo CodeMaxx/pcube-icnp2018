@@ -5,7 +5,7 @@ from scapy.all import Packet
 from scapy.all import IntField, LongField
 
 import sys
-from random import uniform
+from random import seed,uniform
 import threading
 from time import sleep
 
@@ -14,10 +14,12 @@ if len(sys.argv) < 2:
 	exit(0)
 HOSTNAME = int(sys.argv[1])
 IFACE = "eth0"
-FLOW_THRESHOLD = 30
+FLOW_THRESHOLD = 10
 MIN_SLEEP, MAX_SLEEP = 0.01,0.3
 MIN_PACKET_NUM, MAX_PACKET_NUM = 4, 30
 MIN_PACKET_LENGTH, MAX_PACKET_LENGTH = 1,20
+
+seed(101)
 
 class LoadBalancePkt(Packet):
 	name = "LoadBalancePkt"

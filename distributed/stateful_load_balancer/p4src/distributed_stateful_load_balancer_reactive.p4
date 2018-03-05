@@ -388,7 +388,10 @@ control ingress {
             else{
                 //Choose from switches
                 apply(get_switch_flow_count_table);
-                if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3){
+                if (meta.switch_flow1 >= THRESHOLD and meta.switch_flow2 >= THRESHOLD and meta.switch_flow3 >= THRESHOLD){
+                    drop();
+                }
+                else if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3){
                     apply(set_switch1_dest_port_table);
                 }
                 else if(meta.switch_flow2 <= meta.switch_flow1 and meta.switch_flow2 <= meta.switch_flow3){

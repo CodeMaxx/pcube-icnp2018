@@ -41,7 +41,7 @@ class LoadBalancePkt(Packet):
 
 
 def main():
-    num_flows = 30
+    num_flows = 10
     for flow in range(num_flows):
         fid = HOSTNAME*100+flow
         sleep(0.1)

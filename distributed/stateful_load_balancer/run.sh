@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-rm distributed_stateful_load_balancer.json
+rm distributed_stateful_load_balancer_reactive.json
 $rmpcap
-$p4clean
+sudo mn -c
 THIS_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 source $THIS_DIR/../../../../env.sh
@@ -30,10 +30,10 @@ SWITCH_PATH=$BMV2_PATH/targets/simple_switch/simple_switch
 CLI_PATH=$BMV2_PATH/tools/modified_runtime_CLI.py
 # CLI_PATH=$BMV2_PATH/targets/simple_switch/sswitch_CLI.py
 
-$P4C_BM_SCRIPT p4src/distributed_stateful_load_balancer.p4 --json distributed_stateful_load_balancer.json
+$P4C_BM_SCRIPT p4src/distributed_stateful_load_balancer_reactive.p4 --json distributed_stateful_load_balancer_reactive.json
 # This gives libtool the opportunity to "warm-up"
 sudo $SWITCH_PATH >/dev/null 2>&1
 sudo PYTHONPATH=$PYTHONPATH:$BMV2_PATH/mininet/ python topo.py \
     --behavioral-exe $SWITCH_PATH \
-    --json distributed_stateful_load_balancer.json \
+    --json distributed_stateful_load_balancer_reactive.json \
     --cli $CLI_PATH
