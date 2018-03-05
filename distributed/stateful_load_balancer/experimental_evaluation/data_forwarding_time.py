@@ -49,10 +49,6 @@ def avg_data_forwarding_time():
                 # print("Debug", packet_match[0]['Raw'])
                 flow_pkt_num = raw[nfind(raw,'-',2) + 1: nfind(raw,'-',3)]
                 if p_loadbal_layer.fid == packet_match[0]['LoadBalancePkt'].fid and flow_pkt_num.isdigit() and flow_pkt_num == p_flow_pkt_no:
-                    # DEBUG if code
-                    if(packet_match[1] - packet.time) < 0:
-                        print(flow_pkt_num)
-                        continue
                     total_time += packet_match[1] - packet.time
                     num_data_packets += 1
                     break
