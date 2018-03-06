@@ -339,6 +339,7 @@ action send_update(){
     modify_field(load_balancer_head.preamble,2);
     modify_field(switch_info_head.swid,16);
     modify_field(switch_info_head.flow_num,meta.min_flow_len);
+    modify_field(load_balancer_head._count, standard_metadata.ingress_port);
     modify_field(standard_metadata.egress_spec, standard_metadata.ingress_port);
 }
 
@@ -349,8 +350,6 @@ action set_probe_bool(){
 action send_probe(){
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
     modify_field(load_balancer_head.preamble, 1);
-    modify_field(switch_info_head.swid,16);
-    modify_field(switch_info_head.flow_num,meta.min_flow_len);
     modify_field(intrinsic_metadata.mcast_grp, 1);
 }
 
@@ -388,10 +387,10 @@ control ingress {
             else{
                 //Choose from switches
                 apply(get_switch_flow_count_table);
-                if (meta.switch_flow1 >= THRESHOLD and meta.switch_flow2 >= THRESHOLD and meta.switch_flow3 >= THRESHOLD){
+                /*if (meta.switch_flow1 >= THRESHOLD and meta.switch_flow2 >= THRESHOLD and meta.switch_flow3 >= THRESHOLD){
                     drop();
-                }
-                else if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3){
+                }*/
+                if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3){
                     apply(set_switch1_dest_port_table);
                 }
                 else if(meta.switch_flow2 <= meta.switch_flow1 and meta.switch_flow2 <= meta.switch_flow3){
