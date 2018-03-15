@@ -21,7 +21,7 @@ control Int_metadata_insert(inout headers hdr, in int_metadata_t int_metadata,in
             hdr.int_port_ids.ingress_port_id =
                 (bit<16>) standard_metadata.ingress_port;
             hdr.int_port_ids.egress_port_id =
-                (bit<16>) standard_metadata.egress_port;
+                (bit<16>) standard_metadata.egress_spec;
         }
         action int_set_header_2() {
             hdr.int_hop_latency.setValid();

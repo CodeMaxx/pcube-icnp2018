@@ -24,10 +24,10 @@ control process_int_sink (inout headers hdr,inout metadata meta,inout standard_m
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - (bit<16>)((hdr.intl4_shim.len - (bit<8>)hdr.int_header.ins_cnt) << 2);
         //hdr.udp.length_ = hdr.udp.length_ - (bit<16>)((hdr.intl4_shim.len - (bit<8>)hdr.int_header.ins_cnt) << 2);
         // remove all the INT information from the packet
-        hdr.int_header.setInvalid();
+        //hdr.int_header.setInvalid();
         //hdr.int_data.setInvalid();
-        hdr.intl4_shim.setInvalid();
-        hdr.intl4_tail.setInvalid();
+        //hdr.intl4_shim.setInvalid();
+        //hdr.intl4_tail.setInvalid();
         //hdr.int_switch_id.setInvalid();
         //hdr.int_port_ids.setInvalid();
         //hdr.int_hop_latency.setInvalid();
