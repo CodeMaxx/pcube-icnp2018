@@ -6,8 +6,16 @@ import os
 from scapy.all import sniff, sendp, hexdump, get_if_list, get_if_hwaddr
 from scapy.all import Packet, IPOption
 from scapy.all import ShortField, IntField, LongField, BitField, FieldListField, FieldLenField
-from scapy.all import IP, UDP, Raw
+from scapy.all import Ether, IP, UDP, TCP, Raw
 from scapy.layers.inet import _IPOption_HDR
+
+class INTHeader(Packet):
+    name='INT Packet'
+    fields_desc = [
+        IntField('SwitchID', 0),
+        ShortField('IngressPort', 0),
+        ShortField('EgressPort', 0)
+    ]
 
 def get_if():
     ifs=get_if_list()
