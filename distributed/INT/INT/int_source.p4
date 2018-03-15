@@ -47,7 +47,7 @@ control process_int_source_headers (inout headers hdr,inout metadata meta,inout 
         hdr.intl4_tail.dscp = (bit<8>) hdr.ipv4.dscp;
 
         // add all the Headers len (16 bytes) to total len
-        //hdr.ipv4.totalLen = hdr.ipv4.totalLen + 16; // 16 bytes of INT headers are added to packet INT shim header(4B) + INT tail header(4B) + Int Metadat header(8B)  Rest INT stack will be added by the INT transit hops
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 16; // 16 bytes of INT headers are added to packet INT shim header(4B) + INT tail header(4B) + Int Metadat header(8B)  Rest INT stack will be added by the INT transit hops
 
         //hdr.udp.length_ = hdr.udp.length_ + 16;
     }

@@ -12,7 +12,10 @@
 // TODO: implement report logic to external collector
 control process_int_sink (inout headers hdr,inout metadata meta,inout standard_metadata_t standard_metadata) {
     action restore_header () {
-        hdr.tcp.dstPort = hdr.intl4_tail.dest_port;
+        //hdr.tcp.dstPort = hdr.intl4_tail.dest_port;
+        hdr.tcp.dstPort = 1324;
+
+
         //hdr.ipv4.dscp = (bit<6>)hdr.intl4_tail.dscp;
     }
 
@@ -25,14 +28,14 @@ control process_int_sink (inout headers hdr,inout metadata meta,inout standard_m
         //hdr.int_data.setInvalid();
         hdr.intl4_shim.setInvalid();
         hdr.intl4_tail.setInvalid();
-        hdr.int_switch_id.setInvalid();
-        hdr.int_port_ids.setInvalid();
-        hdr.int_hop_latency.setInvalid();
-        hdr.int_q_occupancy.setInvalid();
-        hdr.int_ingress_tstamp.setInvalid();
-        hdr.int_egress_tstamp.setInvalid();
-        hdr.int_q_congestion.setInvalid();
-        hdr.int_egress_port_tx_util.setInvalid();
+        //hdr.int_switch_id.setInvalid();
+        //hdr.int_port_ids.setInvalid();
+        //hdr.int_hop_latency.setInvalid();
+        //hdr.int_q_occupancy.setInvalid();
+        //hdr.int_ingress_tstamp.setInvalid();
+        //hdr.int_egress_tstamp.setInvalid();
+        //hdr.int_q_congestion.setInvalid();
+        //hdr.int_egress_port_tx_util.setInvalid();
     }
 
     apply {
@@ -72,6 +75,8 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
          if (hdr.ipv4.isValid()) {
                  ipv4_lpm.apply();
          }
+         Int_transit_egress.apply(hdr, meta, standard_metadata);
+          process_int_sink.apply(hdr, meta, standard_metadata);
     }
 
 
@@ -81,8 +86,7 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
 control EgressImpl(inout headers hdr, inout metadata meta,inout standard_metadata_t standard_metadata)
 {
     apply{
-        Int_transit_egress.apply(hdr, meta, standard_metadata);
-         process_int_sink.apply(hdr, meta, standard_metadata);
+
 
     }
 
