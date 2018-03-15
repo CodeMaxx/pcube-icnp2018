@@ -35,7 +35,10 @@ class IPOption_MRI(IPOption):
                                    length_from=lambda pkt:pkt.count*4) ]
 def handle_pkt(pkt):
     print "got a packet"
+    print "pkt length="
+    print len(pkt)
     pkt.show2()
+    
 #    hexdump(pkt)
     sys.stdout.flush()
 
