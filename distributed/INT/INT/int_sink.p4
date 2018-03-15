@@ -12,8 +12,8 @@
 // TODO: implement report logic to external collector
 control process_int_sink (inout headers hdr,inout metadata meta,inout standard_metadata_t standard_metadata) {
     action restore_header () {
-        //hdr.tcp.dstPort = hdr.intl4_tail.dest_port;
-        hdr.tcp.dstPort = 1324;
+        hdr.tcp.dstPort = hdr.intl4_tail.dest_port;
+        //hdr.tcp.dstPort = 1324;
 
 
         //hdr.ipv4.dscp = (bit<6>)hdr.intl4_tail.dscp;
@@ -76,7 +76,7 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
                  ipv4_lpm.apply();
          }
          Int_transit_egress.apply(hdr, meta, standard_metadata);
-          process_int_sink.apply(hdr, meta, standard_metadata);
+         process_int_sink.apply(hdr, meta, standard_metadata);
     }
 
 
