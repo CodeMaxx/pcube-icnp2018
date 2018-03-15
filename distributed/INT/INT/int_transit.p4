@@ -38,6 +38,7 @@ inout standard_metadata_t standard_metadata)
         if (hdr.ipv4.isValid()) {
                 ipv4_lpm.apply();
         }
+        Int_transit_egress.apply(hdr, meta, standard_metadata);
     }
 }
 control EgressImpl(inout headers hdr, inout metadata meta,
@@ -47,7 +48,7 @@ inout standard_metadata_t standard_metadata)
     //Int_transit_egress() int_trnasit_egress;
     apply{
         // snip
-        Int_transit_egress.apply(hdr, meta, standard_metadata);
+
         // snip
     }
 }
