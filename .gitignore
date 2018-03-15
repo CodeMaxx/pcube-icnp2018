@@ -1,3 +1,6 @@
+#VScode config
+.vscode/
+
 # PCAP & JSON files from P4
 *.pcap
 
