@@ -9,7 +9,7 @@ from scapy.all import ShortField, IntField, LongField, BitField, FieldListField,
 from scapy.all import Ether, IP, UDP, TCP, Raw
 from scapy.layers.inet import _IPOption_HDR
 
-HOPS = 2
+HOPS = 3
 ShimSize = 4
 TailSize = 4
 INTSize = 8
@@ -111,7 +111,7 @@ def handle_pkt(pkt):
         p1_bytes = p1_bytes[MetadataSize:]
 
     TailHeader(p1_bytes).show()
-    
+
 #    hexdump(pkt)
     sys.stdout.flush()
 

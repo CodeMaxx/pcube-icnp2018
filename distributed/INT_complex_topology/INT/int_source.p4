@@ -105,11 +105,10 @@ inout standard_metadata_t standard_metadata)
             // route the packet to the next hop based on the destination address
 
         process_int_source_headers.apply(hdr, meta, standard_metadata); // sets the INT header fields
-        Int_transit_egress.apply(hdr, meta, standard_metadata); //sets the INT stack to get metadata from the source switches
-
         if (hdr.ipv4.isValid()) {
                 ipv4_lpm.apply();
         }
+        Int_transit_egress.apply(hdr, meta, standard_metadata); //sets the INT stack to get metadata from the source switches
     }
 }
 control EgressImpl(inout headers hdr, inout metadata meta,
