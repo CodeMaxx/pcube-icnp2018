@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# attempt to parse switch id, ingress & egress ports, hop latency, qid & qdepth
+#used to parse switch id and ingress egress ports for 4 hops only
 import sys
 import struct
 import os
@@ -14,7 +14,7 @@ HOPS = 4
 ShimSize = 4
 TailSize = 4
 INTSize = 8
-MetadataSize = 16
+MetadataSize = 8
 
 class ShimHeader(Packet):
     name = 'Shim Header'
@@ -60,10 +60,7 @@ class MetadataHeader(Packet):
     fields_desc = [
         IntField('SwitchID', 0),
         ShortField('IngressPort', 0),
-        ShortField('EgressPort', 0), # ShortField means 16 bytes
-        IntField('Hop Latency', 0),
-        ByteField('Qid', 0),
-        BitField('Qdepth', 0, 24)
+        ShortField('EgressPort', 0)
     ]
 
 

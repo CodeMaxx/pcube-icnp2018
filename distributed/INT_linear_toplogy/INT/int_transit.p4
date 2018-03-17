@@ -41,11 +41,8 @@ inout standard_metadata_t standard_metadata)
 
     }
 }
-control EgressImpl(inout headers hdr, inout metadata meta,
-inout standard_metadata_t standard_metadata)
-
+control EgressImpl(inout headers hdr, inout metadata meta,inout standard_metadata_t standard_metadata)
 {
-    
     apply{
             Int_transit_egress.apply(hdr, meta, standard_metadata);
     }

@@ -92,7 +92,7 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
                  ipv4_lpm.apply();
          }
          //Int_transit_egress.apply(hdr, meta, standard_metadata);
-         //clone packet
+         //clone packet from ingress to egress 
          clone(CloneType.I2E, CLONE_SESSION_ID);
     }
 }

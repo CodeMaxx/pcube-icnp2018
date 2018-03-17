@@ -14,9 +14,7 @@
 // Insert INT header to the packet
 control process_int_source_headers (inout headers hdr,inout metadata meta,inout standard_metadata_t standard_metadata) {
 
-    //direct_counter(CounterType.packets_and_bytes) counter_int_source;
-
-    action int_source(bit<5> ins_cnt, bit<4> ins_mask0003) {
+    action int_source(bit<5> ins_cnt, bit<4> ins_mask0003,bit<4> ins_mask0407) {
         // insert INT shim header
         hdr.intl4_shim.setValid();
         // int_type: Hop-by-hop type (1) , destination type (2)
@@ -35,7 +33,7 @@ control process_int_source_headers (inout headers hdr,inout metadata meta,inout 
         hdr.int_header.ins_cnt = ins_cnt; // Number of instructions that are set in instruction bitmap
         hdr.int_header.remaining_hop_cnt = REMAINING_HOP_CNT;
         hdr.int_header.instruction_mask_0003 = ins_mask0003;
-        hdr.int_header.instruction_mask_0407 = 0;
+        hdr.int_header.instruction_mask_0407 = ins_mask0407;
         hdr.int_header.instruction_mask_0811 = 0; // not supported
         hdr.int_header.instruction_mask_1215 = 0; // not supported
         hdr.int_header.rsvd3 = 0;
@@ -46,24 +44,20 @@ control process_int_source_headers (inout headers hdr,inout metadata meta,inout 
         hdr.intl4_tail.dest_port = hdr.tcp.dstPort;
         hdr.intl4_tail.dscp = (bit<8>) hdr.ipv4.dscp;
 
-        // add all the Headers len (16 bytes) to total len
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 16; // 16 bytes of INT headers are added to packet INT shim header(4B) + INT tail header(4B) + Int Metadat header(8B)  Rest INT stack will be added by the INT transit hops
 
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 16; // 16 bytes of INT headers are added to packet INT shim header(4B) + INT tail header(4B) + Int Metadat header(8B)  Rest INT stack will be added by the INT transit hops
         //hdr.udp.length_ = hdr.udp.length_ + 16;
     }
-    action int_source_dscp(bit<5> ins_cnt, bit<4> ins_mask0003) {
-        int_source(ins_cnt, ins_mask0003);
+    action int_source_dscp(bit<5> ins_cnt, bit<4> ins_mask0003,bit<4> ins_mask0407) {
+        int_source(ins_cnt, ins_mask0003,ins_mask0407);
         hdr.ipv4.dscp = INT_DSCP;
     }
 
     table tb_int_source {
-        key = {
-
-        }
+        key = { }
         actions = {
             int_source_dscp;
         }
-        //counters = counter_int_source;
         size = 1024;
     }
 
@@ -100,15 +94,12 @@ inout standard_metadata_t standard_metadata)
         default_action = NoAction();
     }
     apply{
-        // 2 things TBD
-            // initialize the INT header fields and add INT stack for this switch
-            // route the packet to the next hop based on the destination address
-
+        // initialize the INT header fields
         process_int_source_headers.apply(hdr, meta, standard_metadata); // sets the INT header fields
+        // route the packet to the next hop based on the destination address
         if (hdr.ipv4.isValid()) {
                 ipv4_lpm.apply();
         }
-        //Int_transit_egress.apply(hdr, meta, standard_metadata); //sets the INT stack to get metadata from the source switches
     }
 }
 control EgressImpl(inout headers hdr, inout metadata meta,
