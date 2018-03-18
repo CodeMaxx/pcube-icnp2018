@@ -116,9 +116,11 @@ def handle_pkt(pkt):
     p1_bytes = p1_bytes[INTSize:]
 
     for i in range(HOPS):
-        MetadataHeader(p1_bytes[0:MetadataSize]).show()
+        p2 = MetadataHeader(p1_bytes[0:MetadataSize])
+        p2.show()
         print "SwitchID"
-        #print p1_bytes[0].SwitchID
+        print p2.SwitchID
+        print p2.Hop_Latency
         p1_bytes = p1_bytes[MetadataSize:]
 
     TailHeader(p1_bytes).show()

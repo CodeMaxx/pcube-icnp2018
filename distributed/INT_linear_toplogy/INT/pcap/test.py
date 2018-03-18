@@ -7,7 +7,8 @@ HOPS = 2
 ShimSize = 4
 TailSize = 4
 INTSize = 8
-MetadataSize = 8
+MetadataSize = 16
+
 
 class ShimHeader(Packet):
     name = 'Shim Header'
@@ -18,6 +19,7 @@ class ShimHeader(Packet):
         ByteField('rsvd2', 0),
     ]
 
+
 class TailHeader(Packet):
     name = 'Tail Header'
     fields_desc = [
@@ -25,6 +27,7 @@ class TailHeader(Packet):
         ShortField('dest_port', 0),
         ByteField('dscp', 0),
     ]
+
 
 class INTHeader(Packet):
     name = 'INT Header'
@@ -42,16 +45,21 @@ class INTHeader(Packet):
         BitField('instruction_mask_0407', 0, 4),
         BitField('instruction_mask_0811', 0, 4),
         BitField('instruction_mask_1215', 0, 4),
-        ShortField('rsvd3', 0)  
+        ShortField('rsvd3', 0)
     ]
+
 
 class MetadataHeader(Packet):
     name = 'Metadata Header'
     fields_desc = [
         IntField('SwitchID', 0),
         ShortField('IngressPort', 0),
-        ShortField('EgressPort', 0)
+        ShortField('EgressPort', 0),  # ShortField means 16 bytes
+        IntField('Hop_Latency', 0),
+        ByteField('Qid', 0),
+        BitField('Qdepth', 0, 24)
     ]
+
 
 p1 = packets[0].copy()
 
@@ -66,7 +74,10 @@ INTHeader(p1_bytes[0:INTSize]).show()
 p1_bytes = p1_bytes[INTSize:]
 
 for i in range(HOPS):
-    MetadataHeader(p1_bytes[0:MetadataSize]).show()
+    p2 = MetadataHeader(p1_bytes[0:MetadataSize])
+    p2.show()
+    print(p2.SwitchID)
+    print(p2.Hop_Latency)
     p1_bytes = p1_bytes[MetadataSize:]
 
 TailHeader(p1_bytes).show()
