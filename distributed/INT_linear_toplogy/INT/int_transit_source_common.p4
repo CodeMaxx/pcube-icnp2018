@@ -26,7 +26,7 @@ control Int_metadata_insert(inout headers hdr, in int_metadata_t int_metadata,in
         action int_set_header_2() { // hop latency
             hdr.int_hop_latency.setValid();
             hdr.int_hop_latency.hop_latency =
-                (bit<32>) standard_metadata.deq_timedelta;
+                (bit<32>) standard_metadata.deq_timedelta; //the time, in microseconds, that the packet spent in the queue.
         }
         action int_set_header_3() { // q occupency
             hdr.int_q_occupancy.setValid();

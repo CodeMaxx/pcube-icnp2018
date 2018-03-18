@@ -62,8 +62,8 @@ class MetadataHeader(Packet):
         ShortField('IngressPort', 0),
         ShortField('EgressPort', 0), # ShortField means 16 bytes
         IntField('Hop_Latency', 0),
-        ByteField('Qid', 0),
-        BitField('Qdepth', 0, 24)
+        ByteField('qid', 0),
+        BitField('qdepth', 0, 24)
     ]
 
 
@@ -94,14 +94,22 @@ class IPOption_MRI(IPOption):
 
 
 def handle_pkt(pkt):
+    #open file for writing results
+    dirpath = os.getcwd()
+    print("current directory is : " + dirpath)
+    foldername = os.path.basename(dirpath)
+    print("Directory name is : " + foldername)
+    rfile = open(dirpath+"/../INT_tcp_results.txt","a")
     print("got a packet")
     print("pkt length=")
     print(len(pkt))
     pkt.show2()
     print "IP src =" ,
     print pkt[IP].src
+
     print "IP dst =" ,
     print pkt[IP].dst
+
 
     p1 = pkt.copy()
 
@@ -117,16 +125,37 @@ def handle_pkt(pkt):
 
     for i in range(HOPS):
         p2 = MetadataHeader(p1_bytes[0:MetadataSize])
-        p2.show()
-        print "SwitchID"
-        print p2.SwitchID
-        print p2.Hop_Latency
+        #p2.show()
+        rfile.write(str(pkt[IP].src))
+        rfile.write(" ")
+        rfile.write(str(pkt[IP].dst))
+        rfile.write(" ")
+        print "SwitchID = ", p2.SwitchID
+        rfile.write(str(p2.SwitchID))
+        rfile.write(" ")
+        print "IngressPort = ", p2.IngressPort
+        rfile.write(str(p2.IngressPort))
+        rfile.write(" ")
+        print "EgressPort = ", p2.EgressPort
+        rfile.write(str(p2.EgressPort))
+        rfile.write(" ")
+        print "hop_latency = ", p2.Hop_Latency
+        rfile.write(str(p2.Hop_Latency))
+        rfile.write(" ")
+        print "qid = ", p2.qid
+        rfile.write(str(p2.qid))
+        rfile.write(" ")
+        print "qdepth = ", p2.qdepth
+        rfile.write(str(p2.qdepth))
+        rfile.write("\n")
+
         p1_bytes = p1_bytes[MetadataSize:]
 
     TailHeader(p1_bytes).show()
 
 #    hexdump(pkt)
     sys.stdout.flush()
+    rfile.close()
 
 
 def main():
