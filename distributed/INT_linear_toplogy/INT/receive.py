@@ -61,7 +61,7 @@ class MetadataHeader(Packet):
         IntField('SwitchID', 0),
         ShortField('IngressPort', 0),
         ShortField('EgressPort', 0), # ShortField means 16 bytes
-        IntField('Hop Latency', 0),
+        IntField('Hop_Latency', 0),
         ByteField('Qid', 0),
         BitField('Qdepth', 0, 24)
     ]
@@ -98,6 +98,11 @@ def handle_pkt(pkt):
     print("pkt length=")
     print(len(pkt))
     pkt.show2()
+    print "IP src =" ,
+    print pkt[IP].src
+    print "IP dst =" ,
+    print pkt[IP].dst
+
     p1 = pkt.copy()
 
     p1 = p1.payload.payload.payload
@@ -112,6 +117,8 @@ def handle_pkt(pkt):
 
     for i in range(HOPS):
         MetadataHeader(p1_bytes[0:MetadataSize]).show()
+        print "SwitchID"
+        #print p1_bytes[0].SwitchID
         p1_bytes = p1_bytes[MetadataSize:]
 
     TailHeader(p1_bytes).show()
