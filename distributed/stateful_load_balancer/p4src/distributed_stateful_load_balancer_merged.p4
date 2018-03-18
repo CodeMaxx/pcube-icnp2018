@@ -121,20 +121,39 @@ register flow_to_port_map_register {
 
 // --------------------- Tables -------------------------------
 
-// Update the switch_flow_count
-table update_switch_flow_count_table {
-    actions{
-        update_switch_flow_count;
-    }
-    size: 1;
-}
-
-//Set destination tables
 table get_server_flow_count_table{
     actions{
         get_server_flow_count;
     }
     size:1;
+}
+
+table update_min_flow_len1_table1 {
+    actions{
+        update_min_flow_len1;
+    }
+    size: 1;
+}
+
+table update_min_flow_len2_table1 {
+    actions{
+        update_min_flow_len2;
+    }
+    size: 1;
+}
+
+table send_update_table {
+    actions{
+        send_update;
+    }
+    size: 1;
+}
+
+table update_switch_flow_count_table {
+    actions{
+        update_switch_flow_count;
+    }
+    size: 1;
 }
 
 table set_server_dest_port_table{
@@ -146,6 +165,13 @@ table set_server_dest_port_table{
         set_server_dest_port;
     }
     size:SQTHRESHOLD;
+}
+
+table set_probe_bool_table {
+    actions{
+        set_probe_bool;
+    }
+    size: 1;
 }
 
 table get_switch_flow_count_table{
@@ -176,7 +202,6 @@ table set_switch3_dest_port_table{
     size:1;
 }
 
-// Updates flow_to_port_map_register on a SYN packet
 table update_map_table {
     actions {
         update_map;
@@ -184,7 +209,6 @@ table update_map_table {
     size: 1;
 }
 
-// Forwards packets
 table forwarding_table {
     reads{
         meta.routing_port: valid;
@@ -196,7 +220,13 @@ table forwarding_table {
     size: 1;
 }
 
-// Clears flow_to_port_map_register on a FIN packet
+table send_probe_table {
+    actions{
+        send_probe;
+    }
+    size: 1;
+}
+
 table clear_map_table {
     actions {
         clear_map;
@@ -204,25 +234,9 @@ table clear_map_table {
     size: 1;
 }
 
-// Update the server_flow_count
 table update_flow_count_table {
     actions{
         update_flow_count;
-    }
-    size: 1;
-}
-
-// Send the update message regarding flow info to other switches
-table update_min_flow_len1_table1 {
-    actions{
-        update_min_flow_len1;
-    }
-    size: 1;
-}
-
-table update_min_flow_len2_table1 {
-    actions{
-        update_min_flow_len2;
     }
     size: 1;
 }
@@ -241,49 +255,47 @@ table update_min_flow_len2_table2 {
     size: 1;
 }
 
-table send_update_table {
-    actions{
-        send_update;
-    }
-    size: 1;
-}
-
-table send_probe_table {
-    actions{
-        send_probe;
-    }
-    size: 1;
-}
-
-table set_probe_bool_table {
-    actions{
-        set_probe_bool;
-    }
-    size: 1;
-}
-
 table send_broadcast_update_table {
     actions{
         send_broadcast_update;
     }
     size: 1;
 }
+
 // ---------------------------- Actions -----------------------
 
-//Update switch flow count
-action update_switch_flow_count() {
-    register_write(total_flow_count_register,standard_metadata.ingress_port - 2, switch_info_head.flow_num);
-}
-
-//Set destination actions
 action get_server_flow_count(){
     register_read(meta.server_flow1,total_flow_count_register,0);
     register_read(meta.server_flow2,total_flow_count_register,1);
 }
 
+action update_min_flow_len1(){
+    modify_field(meta.min_flow_len, meta.server_flow1);
+}
+
+action update_min_flow_len2(){
+    modify_field(meta.min_flow_len, meta.server_flow2);
+}
+
+action send_update(){
+    modify_field(load_balancer_head.preamble,2);
+    modify_field(switch_info_head.swid,16);
+    modify_field(switch_info_head.flow_num,meta.min_flow_len);
+    modify_field(load_balancer_head._count, standard_metadata.ingress_port);
+    modify_field(standard_metadata.egress_spec, standard_metadata.ingress_port);
+}
+
+action update_switch_flow_count() {
+    register_write(total_flow_count_register,standard_metadata.ingress_port - 2, switch_info_head.flow_num);
+}
+
 action set_server_dest_port(flow_count,flow_dest){
     register_write(total_flow_count_register,flow_dest - 2, flow_count + 1);
     modify_field(standard_metadata.egress_spec,flow_dest);
+}
+
+action set_probe_bool(){
+    modify_field(meta.probe_bool,1);
 }
 
 action get_switch_flow_count(){
@@ -307,14 +319,12 @@ action set_switch3_dest_port(){
     modify_field(standard_metadata.egress_spec,6);
 }
 
-//Update mapping
 action update_map() {
     modify_field_with_hash_based_offset(meta.hash, 0,
                                         flow_register_index, 65536);
     register_write(flow_to_port_map_register, meta.hash, standard_metadata.egress_spec);
 }
 
-//Forward
 action forward() {
     modify_field_with_hash_based_offset(meta.hash, 0,
                                         flow_register_index, 65536);
@@ -323,12 +333,12 @@ action forward() {
     modify_field(load_balancer_head.hash,meta.hash);
 }
 
-action _drop() {
-    drop();
-    //modify_field(standard_metadata.egress_spec,1);
+action send_probe(){
+    clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
+    modify_field(load_balancer_head.preamble, 1);
+    modify_field(intrinsic_metadata.mcast_grp, 1);
 }
 
-//Clear mapping
 action clear_map() {
     modify_field_with_hash_based_offset(meta.hash, 0,
                                         flow_register_index, 65536);
@@ -341,36 +351,10 @@ action update_flow_count() {
     register_write(total_flow_count_register,meta.routing_port-2, meta.temp);
 }
 
-action update_min_flow_len1(){
-    modify_field(meta.min_flow_len, meta.server_flow1);
-}
-
-action update_min_flow_len2(){
-    modify_field(meta.min_flow_len, meta.server_flow2);
-}
-
 field_list meta_list {
     meta;
     standard_metadata;
     intrinsic_metadata;
-}
-
-action send_update(){
-    modify_field(load_balancer_head.preamble,2);
-    modify_field(switch_info_head.swid,16);
-    modify_field(switch_info_head.flow_num,meta.min_flow_len);
-    modify_field(load_balancer_head._count, standard_metadata.ingress_port);
-    modify_field(standard_metadata.egress_spec, standard_metadata.ingress_port);
-}
-
-action set_probe_bool(){
-    modify_field(meta.probe_bool,1);
-}
-
-action send_probe(){
-    clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
-    modify_field(load_balancer_head.preamble, 1);
-    modify_field(intrinsic_metadata.mcast_grp, 1);
 }
 
 action send_broadcast_update(){
@@ -381,37 +365,50 @@ action send_broadcast_update(){
     modify_field(intrinsic_metadata.mcast_grp, 1);
 }
 
+action _drop() {
+    drop();
+}
+
 //------------------------ Control Logic -----------------
 
 control ingress {
-    apply(get_server_flow_count_table);  
+    apply(get_server_flow_count_table); 
+
+    //Preamble 1 => Probe packet 
     if (load_balancer_head.preamble == 1){
-        //send update
+        //Find server with less number of flows
         if(meta.server_flow1 < meta.server_flow2){
             apply(update_min_flow_len1_table1);
         }
         else{
             apply(update_min_flow_len2_table1);
         }
+        //Send update (set preamble as 2)
         apply(send_update_table);
     }
+    //Preamble 2 => Update packet
     else if (load_balancer_head.preamble == 2){
-        //get update
+        //update the registers
         apply(update_switch_flow_count_table);
     }
+    //Default Preamble is 0
     else {
+
+        //-------------------------------------------------------------------------
         //Start of flow
         if(load_balancer_head.syn == 1) {
 
+            //Forwarding to own server
             if(meta.server_flow1 < THRESHOLD or meta.server_flow2 < THRESHOLD){
                 //Forwarding can be done locally
                 apply(set_server_dest_port_table);
 
-                //Take decision to send probe packet or not
+                //Take decision to send probe packet or not (Reactive)
                 if ((meta.server_flow1 + meta.server_flow2)*10 > (UPPER_LIMIT * SERVERS * THRESHOLD)){
                     apply(set_probe_bool_table);
                 }
             }
+            //Forwarding to another switch
             else{
                 //Choose from switches
                 apply(get_switch_flow_count_table);
@@ -429,9 +426,10 @@ control ingress {
                 }
             }
 
-            //Update mapping
+            //Remember mapping for the flow
             apply(update_map_table);
         }
+        //-------------------------------------------------------------------------
 
         //Forwarding
         apply(forwarding_table);
@@ -440,24 +438,30 @@ control ingress {
             apply(send_probe_table);
         }
 
+        //-------------------------------------------------------------------------
         //End of flow
         if(load_balancer_head.fin == 1) {
+
+            //Clear mappings
             apply(clear_map_table);
             apply(update_flow_count_table);
 
-            //Take decision to send probe packet or not
+            //Take decision to send probe packet or not (Proactive)
             if ((meta.server_flow1 + meta.server_flow2)*10 < (LOWER_LIMIT * SERVERS * THRESHOLD)){
                 if(meta.routing_port == 2 or meta.routing_port == 3){
+                    //Find server with less number of flows
                     if(meta.server_flow1 < meta.server_flow2){
                         apply(update_min_flow_len1_table2);
                     }
                     else{
                         apply(update_min_flow_len2_table2);
                     }
+                    //Send broadcast (set preamble as 2)
                     apply(send_broadcast_update_table);
                 }
             }
         }
+        //-------------------------------------------------------------------------
     }
 }
 
