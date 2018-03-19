@@ -2,6 +2,7 @@ table_set_default ipv4_lpm drop
 table_set_default int_prep int_transit 4
 table_set_default int_inst_0003 int_set_header_0003_i0
 table_set_default int_inst_0407 int_set_header_0407_i0
+set_queue_rate 20
 
 table_add int_inst_0003 int_set_header_0003_i0 0 =>
 table_add int_inst_0003 int_set_header_0003_i1 1 =>
@@ -42,3 +43,4 @@ table_add ipv4_lpm ipv4_forward 10.0.3.2/32 => 00:00:00:00:03:02 2
 table_add ipv4_lpm ipv4_forward 10.0.3.3/32 => 00:00:00:00:03:03 2
 table_add ipv4_lpm ipv4_forward 10.0.5.2/32 => 00:00:00:00:05:02 2
 table_add ipv4_lpm ipv4_forward 10.0.5.3/32 => 00:00:00:00:05:03 2
+table_add ipv4_lpm ipv4_forward 10.0.4.2/32 => 00:00:00:00:04:02 1

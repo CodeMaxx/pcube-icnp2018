@@ -46,6 +46,10 @@ def main():
             #sendp(pkt, iface=iface, verbose=False)
             sendp(pkt, iface=iface, verbose=False)
             total_pkts += 1
+    #pkt =  Ether(src=get_if_hwaddr(iface), dst='00:00:00:00:01:01')
+    #pkt = pkt /IP(dst=addr) / UDP(dport=3456, sport=49152) / sys.argv[2]
+    #pkt.show2()
+    #sendp(pkt, iface=iface, verbose=False)
     print "Sent %s packets in total" % total_pkts
 
 if __name__ == '__main__':

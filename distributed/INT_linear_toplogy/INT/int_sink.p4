@@ -14,7 +14,7 @@ control process_int_clone (inout headers hdr,inout metadata meta,inout standard_
     //mon_dmac is the destination mac of the monitoring engine
     action set_mon_params(macAddr_t mon_dmac,ipAddr_t mon_dest_ip){
         hdr.ethernet.dstAddr = mon_dmac;
-        hdr.ipv4.dstAddr = mon_dest_ip;
+        //hdr.ipv4.dstAddr = mon_dest_ip;
     }
     table tb_generate_report {
         key = {
@@ -41,17 +41,18 @@ control process_int_sink (inout headers hdr,inout metadata meta,inout standard_m
         hdr.udp.len = hdr.udp.len - (bit<16>)((hdr.intl4_shim.len - (bit<8>)hdr.int_header.ins_cnt) << 2);
         // remove all the INT information from the packet
         hdr.int_header.setInvalid();
+        hdr.int_data.setInvalid();
         hdr.intl4_shim.setInvalid();
         hdr.intl4_tail.setInvalid();
-        hdr.int_switch_id.setInvalid();
-        hdr.int_port_ids.setInvalid();
+        //hdr.int_switch_id.setInvalid();
+        //hdr.int_port_ids.setInvalid();
 
-        hdr.int_hop_latency.setInvalid();
-        hdr.int_q_occupancy.setInvalid();
-        hdr.int_ingress_tstamp.setInvalid();
-        hdr.int_egress_tstamp.setInvalid();
-        hdr.int_q_congestion.setInvalid();
-        hdr.int_egress_port_tx_util.setInvalid();
+        //hdr.int_hop_latency.setInvalid();
+        //hdr.int_q_occupancy.setInvalid();
+        //hdr.int_ingress_tstamp.setInvalid();
+        //hdr.int_egress_tstamp.setInvalid();
+        //hdr.int_q_congestion.setInvalid();
+        //hdr.int_egress_port_tx_util.setInvalid();
     }
 
     apply {
@@ -85,14 +86,15 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
         default_action = NoAction();
     }
     apply{
-
+     //clone packet from ingress to egress
         clone(CloneType.I2E, CLONE_SESSION_ID);
 
          if (hdr.ipv4.isValid()) {
                  ipv4_lpm.apply();
          }
          //Int_transit_egress.apply(hdr, meta, standard_metadata);
-         //clone packet from ingress to egress
+
+         process_int_sink.apply(hdr, meta, standard_metadata);
 
     }
 }
@@ -106,7 +108,7 @@ control EgressImpl(inout headers hdr, inout metadata meta,inout standard_metadat
             process_int_clone.apply(hdr,meta,standard_metadata);
         }
         else {
-            process_int_sink.apply(hdr, meta, standard_metadata);
+            //process_int_sink.apply(hdr, meta, standard_metadata);
         }
     }
 }

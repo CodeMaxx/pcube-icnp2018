@@ -101,6 +101,10 @@ header int_q_congestion_t {
 header int_egress_port_tx_util_t {
         bit<32> egress_port_tx_util;
 }
+header int_data_t {
+    // Maximum int metadata stack size in bits:
+        varbit<8032> data;
+}
 /* standard ethernet/ip/tcp headers */
 
 struct headers {
@@ -112,6 +116,7 @@ struct headers {
 
         intl4_shim_t intl4_shim;
         int_header_t int_header;
+        int_data_t int_data;
         int_switch_id_t int_switch_id;
         int_port_ids_t int_port_ids;
         int_hop_latency_t int_hop_latency;
