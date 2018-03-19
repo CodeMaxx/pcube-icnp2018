@@ -29,12 +29,16 @@ def link_traffic():
         # Traffic over links with users and servers
         for j in (USER_PORTS + SERVER_PORTS):
             try:
+                # Packets outgoing to host or server
                 outgoing_packets = rdpcap("pcap/s%d-eth%d_in.pcap" % (i, j))
+                # Packets incoming from host or server
                 incoming_packets = rdpcap("pcap/s%d-eth%d_out.pcap" % (i, j))
             except:
                 continue
             all_packets = outgoing_packets + incoming_packets
+            # Number of packets
             num_pkts = sum([1 for pkt in all_packets])
+            # Total size of all packets
             total_pkt_size = sum([len(pkt) for pkt in all_packets])
 
             host_number = (i - 1)*(total_hosts) + j
@@ -46,12 +50,15 @@ def link_traffic():
         eth_copy = eth_no
         for j in range(i+1, NUM_SWITCHES + 1):
             try:
+                # Packets exchanged between a pair of switches
                 incoming1 = rdpcap("pcap/s%d-eth%d_out.pcap" % (i, eth_copy))
                 incoming2 = rdpcap("pcap/s%d-eth%d_out.pcap" % (j, total_hosts + i))
             except:
                 continue
             all_packets = incoming1 + incoming2
+            # Number of packets
             num_pkts = sum([1 for pkt in all_packets])
+            # Total size of all packets
             total_pkt_size = sum([len(pkt) for pkt in all_packets])
 
             print("Number of packets over link s%d-s%d: %d" % (i, j, num_pkts))

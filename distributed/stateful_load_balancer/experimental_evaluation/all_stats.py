@@ -22,6 +22,7 @@ import decision_time
 import data_forwarding_time
 import num_probe_packets
 import link_traffic
+import end_to_end
 
 from utils import *
 
@@ -31,6 +32,7 @@ def main():
     data_forwarding_time.main()
     num_probe_packets.main()
     link_traffic.main()
+    end_to_end.main()
 
 if __name__ == '__main__':
     main()

@@ -25,14 +25,19 @@ from utils import *
 def num_probe_packets():
     total_probe_packets = 0
 
+    # Go through all switches
     for i in range(1, NUM_SWITCHES + 1):
         num = 0
+        # Go through all swtich ports for that switch
         for j in SWITCH_PORTS:
             try:
+                # packets going out from a switch to other switches
                 outgoing_packets = rdpcap("pcap/s%d-eth%d_in.pcap" % (i, j))
             except:
                 continue
+            # Filter out all the probe packets
             probe_packets = filter(lambda packet: packet[0]['LoadBalancePkt'].preamble == 1 and packet[0]['LoadBalancePkt'].fin == 1, [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
+            # Accumulate number of probe packets sent out by each switch
             num += len(list(probe_packets))
         print("Probe packets sent by switch %d: %d" % (i, num))
         total_probe_packets += num

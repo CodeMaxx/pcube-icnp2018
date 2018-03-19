@@ -27,19 +27,23 @@ def avg_syn_decision_time():
     total_time = 0
     num_syn_packets = 0
     bla = 0
+    # Go through all users
     for i in range(1, NUM_SWITCHES + 1):
         try:
             host_packets = rdpcap(PCAP_BASE_DIRECTORY + "s%d-eth1_out.pcap" % i)
         except:
             continue
         all_outgoing_flow_packets = []
+        # Go through all non-users on the switch and get packets going from switch to them
         for j in range(2, NUM_PORTS + 1):
             try:
                 outgoing_packets = rdpcap(PCAP_BASE_DIRECTORY + "s%d-eth%d_in.pcap" % (i, j))
             except:
                 continue
+            # Filter out all the SYN packets and convert them to LoadBalancerPkt
+            # Also store the timestamp of the packets
             all_outgoing_flow_packets += filter(lambda packet: packet[0]['Raw'].load.startswith(b"SYN"), [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
-
+        # For all the user packets
         for packet in host_packets:
             p = LoadBalancePkt(bytes(packet))
             p_loadbal_layer = p['LoadBalancePkt']
@@ -48,7 +52,9 @@ def avg_syn_decision_time():
                 continue
 
             bla += 1
+            # Find packet matching the host packet
             for packet_match in all_outgoing_flow_packets:
+                # If the packets match then find the decision + forwarding time for the packet
                 if p_loadbal_layer.fid == packet_match[0]['LoadBalancePkt'].fid:
                     total_time += packet_match[1] - packet.time
                     num_syn_packets += 1

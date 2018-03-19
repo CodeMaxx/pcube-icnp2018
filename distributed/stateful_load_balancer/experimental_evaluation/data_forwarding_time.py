@@ -27,24 +27,29 @@ def avg_data_forwarding_time():
     total_time = 0
     num_data_packets = 0
     bla = 0
-
+    # Go through all users
     for i in range(1, NUM_SWITCHES + 1):
         try:
             host_packets = rdpcap("pcap/s%d-eth1_out.pcap" % i)
         except:
             continue
         all_outgoing_flow_packets = []
+        # Go through all non-users on the switch and get packets going from switch to them
         for j in range(2, NUM_PORTS + 1):
             try:
                 outgoing_packets = rdpcap("pcap/s%d-eth%d_in.pcap" % (i, j))
             except:
                 continue
+            # Filter out all the data packets and convert them to LoadBalancerPkt
+            # Also store the timestamp of the packets
             all_outgoing_flow_packets += filter(lambda packet: packet[0]['Raw'].load.startswith(b"Data"), [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
 
+        # For all the user packets
         for packet in host_packets:
             p = LoadBalancePkt(bytes(packet))
             p_loadbal_layer = p['LoadBalancePkt']
             p_raw = str(p['Raw'].load)
+            # Extract the packet number for this fid
             p_flow_pkt_no = p_raw[nfind(p_raw,'-',2) + 1: nfind(p_raw,'-',3)]
 
             # If p is not a Data packet
@@ -52,10 +57,13 @@ def avg_data_forwarding_time():
                 continue
             bla +=1
             k = True
+
+            # Find packet matching the host packet
             for packet_match in all_outgoing_flow_packets:
                 raw = str(packet_match[0]['Raw'].load)
                 # print("Debug", packet_match[0]['Raw'])
                 flow_pkt_num = raw[nfind(raw,'-',2) + 1: nfind(raw,'-',3)]
+                # If the packets match then find the forwarding time for the packet
                 if p_loadbal_layer.fid == packet_match[0]['LoadBalancePkt'].fid and flow_pkt_num.isdigit() and flow_pkt_num == p_flow_pkt_no:
                     total_time += packet_match[1] - packet.time
                     num_data_packets += 1
