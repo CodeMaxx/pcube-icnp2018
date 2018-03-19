@@ -41,12 +41,12 @@ control process_int_source_headers (inout headers hdr,inout metadata meta,inout 
         // insert INT tail header
         hdr.intl4_tail.setValid();
         hdr.intl4_tail.next_proto = hdr.ipv4.protocol;
-        hdr.intl4_tail.dest_port = hdr.tcp.dstPort;
+        hdr.intl4_tail.dest_port = hdr.udp.dport;
         hdr.intl4_tail.dscp = (bit<8>) hdr.ipv4.dscp;
 
 
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 16; // 16 bytes of INT headers are added to packet INT shim header(4B) + INT tail header(4B) + Int Metadat header(8B)  Rest INT stack will be added by the INT transit hops
-        //hdr.udp.length_ = hdr.udp.length_ + 16;
+        hdr.udp.len = hdr.udp.len + 16;
     }
     action int_source_dscp(bit<5> ins_cnt, bit<4> ins_mask0003,bit<4> ins_mask0407) {
         int_source(ins_cnt, ins_mask0003,ins_mask0407);

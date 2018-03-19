@@ -31,18 +31,16 @@ control process_int_clone (inout headers hdr,inout metadata meta,inout standard_
 
 control process_int_sink (inout headers hdr,inout metadata meta,inout standard_metadata_t standard_metadata) {
     action restore_header () {
-        hdr.tcp.dstPort = hdr.intl4_tail.dest_port;
-        //hdr.tcp.dstPort = 1324;
-        //hdr.ipv4.dscp = (bit<6>)hdr.intl4_tail.dscp;
+        hdr.udp.dport = hdr.intl4_tail.dest_port;
+        hdr.ipv4.dscp = (bit<6>)hdr.intl4_tail.dscp;
     }
 
     action int_sink() {
         // restore length fields of IPv4 header and UDP header
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - (bit<16>)((hdr.intl4_shim.len - (bit<8>)hdr.int_header.ins_cnt) << 2);
-        //hdr.udp.length_ = hdr.udp.length_ - (bit<16>)((hdr.intl4_shim.len - (bit<8>)hdr.int_header.ins_cnt) << 2);
+        hdr.udp.len = hdr.udp.len - (bit<16>)((hdr.intl4_shim.len - (bit<8>)hdr.int_header.ins_cnt) << 2);
         // remove all the INT information from the packet
         hdr.int_header.setInvalid();
-        //hdr.int_data.setInvalid();
         hdr.intl4_shim.setInvalid();
         hdr.intl4_tail.setInvalid();
         hdr.int_switch_id.setInvalid();
@@ -88,12 +86,14 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
     }
     apply{
 
+        clone(CloneType.I2E, CLONE_SESSION_ID);
+
          if (hdr.ipv4.isValid()) {
                  ipv4_lpm.apply();
          }
          //Int_transit_egress.apply(hdr, meta, standard_metadata);
-         //clone packet from ingress to egress 
-         clone(CloneType.I2E, CLONE_SESSION_ID);
+         //clone packet from ingress to egress
+
     }
 }
 

@@ -7,6 +7,7 @@
 const bit<6> INT_DSCP = 0x1;
 #define ETH_TYPE_IPV4 0x0800
 #define IP_PROTO_TCP 8w6
+#define IP_PROTO_UDP 8w17
 const bit<8> INT_HEADER_LEN_WORD = 4;
 const bit<8> REMAINING_HOP_CNT = 5;
 typedef bit<48> macAddr_t;
