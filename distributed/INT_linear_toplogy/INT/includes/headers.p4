@@ -35,7 +35,12 @@ header tcp_t {
         bit<16> checksum;
         bit<16> urgentPtr;
 }
-
+header udp_t{
+        bit<16> sport;
+        bit<16> dport;
+        bit<16> len;
+        bit<16> chksum;
+}
 // INT headers'
 /* INT shim header for TCP/UDP */
 header intl4_shim_t {
@@ -67,15 +72,7 @@ header int_header_t {
         bit<4> instruction_mask_1215;
         bit<16> rsvd3;
 }
-/*
-header int_data_t {
-    // Maximum int metadata stack size in bits:
-    // (0xFF -4) * 32 (excluding INT shim header, tail header and INT header)
-    varbit<8032> data;
-}
-*/
-/* split the bits for lookup */
-/* INT meta-value headers - different header for each value type */
+
 header int_switch_id_t {
         bit<32> switch_id;
 }
@@ -110,11 +107,11 @@ struct headers {
         ethernet_t ethernet;
         ipv4_t ipv4;
         tcp_t tcp;
+        udp_t udp;
             // INT specific headers
 
         intl4_shim_t intl4_shim;
         int_header_t int_header;
-        //int_data_t int_data;
         int_switch_id_t int_switch_id;
         int_port_ids_t int_port_ids;
         int_hop_latency_t int_hop_latency;

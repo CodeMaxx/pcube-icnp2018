@@ -96,9 +96,9 @@ class IPOption_MRI(IPOption):
 def handle_pkt(pkt):
     #open file for writing results
     dirpath = os.getcwd()
-    print("current directory is : " + dirpath)
+    #print("current directory is : " + dirpath)
     foldername = os.path.basename(dirpath)
-    print("Directory name is : " + foldername)
+    #print("Directory name is : " + foldername)
     rfile = open(dirpath+"/../INT_tcp_results.txt","a")
     print("got a packet")
     print("pkt length=")
