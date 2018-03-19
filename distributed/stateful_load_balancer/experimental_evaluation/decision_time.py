@@ -26,7 +26,7 @@ def avg_syn_decision_time():
     avg_time = 0
     total_time = 0
     num_syn_packets = 0
-
+    bla = 0
     for i in range(1, NUM_SWITCHES + 1):
         try:
             host_packets = rdpcap(PCAP_BASE_DIRECTORY + "s%d-eth1_out.pcap" % i)
@@ -43,11 +43,11 @@ def avg_syn_decision_time():
         for packet in host_packets:
             p = LoadBalancePkt(bytes(packet))
             p_loadbal_layer = p['LoadBalancePkt']
-
             # If p is not a SYN packet
             if not p['Raw'].load.startswith(b"SYN"):
                 continue
 
+            bla += 1
             for packet_match in all_outgoing_flow_packets:
                 if p_loadbal_layer.fid == packet_match[0]['LoadBalancePkt'].fid:
                     total_time += packet_match[1] - packet.time
@@ -59,6 +59,7 @@ def avg_syn_decision_time():
     print("Total time taken for forwarding all SYN packets: %s milliseconds" % str(total_time*1000))
     print("Number of SYN packets: %s" % num_syn_packets)
     print("Average decision making time: %s milliseconds" % str(avg_time*1000))
+    print(bla)
 
 def main():
     cprint("Decision Making Time")

@@ -23,15 +23,63 @@ from scapy.all import rdpcap
 from utils import *
 
 def end_to_end_latency():
-    for i in range(NUM_SWITCHES):
+    avg_time = 0
+    total_time = 0
+    num_data_packets = 0
+    bla = 0
+    for i in range(1, NUM_SWITCHES+1):
         try:
-            outgoing_packets = rdpcap("pcap/s%d-eth1_in.pcap" % i)
+            outgoing_packets = rdpcap("pcap/s%d-eth1_out.pcap" % i)
         except:
             continue
-        for j in range(NUM_SWITCHES):
-            for k in SERVER_PORTS:
-                pass
+        
+        all_outgoing_flow_packets = filter(lambda packet: 
+            packet[0]['Raw'].load.startswith(b"Data") or packet[0]['Raw'].load.startswith(b"SYN") or packet[0]['Raw'].load.startswith(b"FIN"),
+             [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
+        
+        for pkt in all_outgoing_flow_packets:
+            bla += 1
+            p = pkt[0]
+            # p.show()
+            p_loadbal_layer = p['LoadBalancePkt']
+            p_raw = str(p['Raw'].load)
+            p_flow_pkt_no = p_raw[nfind(p_raw,'-',2) + 1: nfind(p_raw,'-',3)]
+            # print(p_flow_pkt_no)        
+            
+            for j in range(1, NUM_SWITCHES+1):
+                for k in SERVER_PORTS:
+                    try:
+                        incoming_packets = rdpcap("pcap/s%d-eth%d_in.pcap" % (j, k))
+                    except:
+                        continue
+                    for packet_match in incoming_packets:
+                        pkm = LoadBalancePkt(bytes(packet_match))
+                        raw = str(pkm['Raw'].load)
 
+                        # print("Debug", packet_match[0]['Raw'])
+                        flow_pkt_num = raw[nfind(raw,'-',2) + 1: nfind(raw,'-',3)]
+                        # pkm.show()
+                        if p_loadbal_layer.fid == pkm['LoadBalancePkt'].fid and pkm['LoadBalancePkt'].syn == 1 and p['LoadBalancePkt'].syn == 1:
+                            total_time += packet_match.time - pkt[1]
+                            num_data_packets += 1
+                            break
+                        
+                        if p_loadbal_layer.fid == pkm['LoadBalancePkt'].fid and pkm['LoadBalancePkt'].fin == 1 and p['LoadBalancePkt'].fin == 1:
+                            total_time += packet_match.time - pkt[1]
+                            num_data_packets += 1
+                            break
+                                
+                        if p_loadbal_layer.fid == pkm['LoadBalancePkt'].fid and flow_pkt_num.isdigit() and flow_pkt_num == p_flow_pkt_no:
+                            total_time += packet_match.time - pkt[1]
+                            num_data_packets += 1
+                            break
+
+    avg_time = total_time/num_data_packets
+
+    print("Total time taken for forwarding all Data packets: %s milliseconds" % str(total_time*1000))
+    print("Number of Data packets: %s" % num_data_packets)
+    print("Average End to End latency: %s milliseconds" % str(avg_time*1000))
+    print(bla)
 
 def main():
     cprint("End to End Latency")
