@@ -26,6 +26,7 @@ def avg_data_forwarding_time():
     avg_time = 0
     total_time = 0
     num_data_packets = 0
+    bla = 0
 
     for i in range(1, NUM_SWITCHES + 1):
         try:
@@ -49,7 +50,8 @@ def avg_data_forwarding_time():
             # If p is not a Data packet
             if not p['Raw'].load.startswith(b"Data"):
                 continue
-
+            bla +=1
+            k = True
             for packet_match in all_outgoing_flow_packets:
                 raw = str(packet_match[0]['Raw'].load)
                 # print("Debug", packet_match[0]['Raw'])
@@ -57,13 +59,16 @@ def avg_data_forwarding_time():
                 if p_loadbal_layer.fid == packet_match[0]['LoadBalancePkt'].fid and flow_pkt_num.isdigit() and flow_pkt_num == p_flow_pkt_no:
                     total_time += packet_match[1] - packet.time
                     num_data_packets += 1
+                    k = False
                     break
-
+            if k:
+                p.show()
     avg_time = total_time/num_data_packets
 
     print("Total time taken for forwarding all Data packets: %s milliseconds" % str(total_time*1000))
     print("Number of Data packets: %s" % num_data_packets)
     print("Average forwarding time: %s milliseconds" % str(avg_time*1000))
+    print(bla)
 
 def main():
     cprint("Data Forwarding Time")
