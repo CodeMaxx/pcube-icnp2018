@@ -55,4 +55,3 @@ V1Switch(
         compute_checksum_control(),
         DeparserImpl()
         ) main;
-/* End of Code snippet */
