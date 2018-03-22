@@ -30,6 +30,7 @@ MIN_PACKET_LENGTH, MAX_PACKET_LENGTH = 5,20
 CHANGE_FREQUENCY = 20
 experiment_starts = datetime.now()
 num_threads = 3
+np.random.seed(0)
 
 seed(101)
 
