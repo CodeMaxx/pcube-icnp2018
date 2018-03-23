@@ -24,6 +24,8 @@ import sys
 
 import random
 
+from __future__ import print_function
+
 HOSTNAME = sys.argv[1]
 
 class LoadBalancePkt(Packet):
