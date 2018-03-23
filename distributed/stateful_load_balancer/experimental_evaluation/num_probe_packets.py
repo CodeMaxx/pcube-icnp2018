@@ -23,11 +23,13 @@ from scapy.all import rdpcap
 from utils import *
 
 def num_probe_packets():
-    total_probe_packets = 0
+    total_reactive = 0
+    total_proactive = 0
 
     # Go through all switches
     for i in range(1, NUM_SWITCHES + 1):
-        num = 0
+        num_r = 0
+        num_p = 0
         # Go through all swtich ports for that switch
         for j in SWITCH_PORTS:
             try:
@@ -36,13 +38,20 @@ def num_probe_packets():
             except:
                 continue
             # Filter out all the probe packets
-            probe_packets = filter(lambda packet: packet[0]['LoadBalancePkt'].preamble == 1 and packet[0]['LoadBalancePkt'].fin == 1, [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
+            proactive_probe_packets = filter(lambda packet: (packet[0]['LoadBalancePkt'].preamble == 2 or packet[0]['LoadBalancePkt'].preamble == 1)
+             and packet[0]['LoadBalancePkt'].fin == 1 , [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
+            reactive_probe_packets = filter(lambda packet: (packet[0]['LoadBalancePkt'].preamble == 2 or packet[0]['LoadBalancePkt'].preamble == 1)
+             and packet[0]['LoadBalancePkt'].syn == 1 , [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
+            
             # Accumulate number of probe packets sent out by each switch
-            num += len(list(probe_packets))
-        print("Probe packets sent by switch %d: %d" % (i, num))
-        total_probe_packets += num
+            num_r += len(list(reactive_probe_packets))
+            num_p += len(list(proactive_probe_packets))
+        print("Reactive, Proactive packets sent by switch %d: %d, %d" % (i, num_r, num_p))
+        total_reactive += num_r
+        total_proactive += num_p
 
-    print("Total Probe Packets: %d" % total_probe_packets)
+    print("Total Reactive Packets: %d" % total_reactive)
+    print("Total Proactive Packets: %d" % total_proactive)
 
 def main():
     cprint("Probe Packets")

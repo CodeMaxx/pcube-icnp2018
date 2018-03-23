@@ -15,8 +15,8 @@
 
 // ------------------ Constants --------------------
 
-#define UPPER_LIMIT 8
-#define LOWER_LIMIT 6
+#define UPPER_LIMIT 80
+#define LOWER_LIMIT 20
 #define SERVERS 2
 #define THRESHOLD 4
 #define SQTHRESHOLD 25
@@ -333,6 +333,12 @@ action forward() {
     modify_field(load_balancer_head.hash,meta.hash);
 }
 
+field_list meta_list {
+    meta;
+    standard_metadata;
+    intrinsic_metadata;
+}
+
 action send_probe(){
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
     modify_field(load_balancer_head.preamble, 1);
@@ -351,13 +357,9 @@ action update_flow_count() {
     register_write(total_flow_count_register,meta.routing_port-2, meta.temp);
 }
 
-field_list meta_list {
-    meta;
-    standard_metadata;
-    intrinsic_metadata;
-}
-
 action send_broadcast_update(){
+    modify_field(load_balancer_head._count, (meta.server_flow1 + meta.server_flow2)*10);
+    modify_field(load_balancer_head.hash, LOWER_LIMIT * SERVERS * THRESHOLD);
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
     modify_field(load_balancer_head.preamble,2);
     modify_field(switch_info_head.swid,16);
@@ -404,7 +406,7 @@ control ingress {
                 apply(set_server_dest_port_table);
 
                 //Take decision to send probe packet or not (Reactive)
-                if ((meta.server_flow1 + meta.server_flow2)*10 > (UPPER_LIMIT * SERVERS * THRESHOLD)){
+                if ((meta.server_flow1 + meta.server_flow2)*100 > (UPPER_LIMIT * SERVERS * THRESHOLD)){
                     apply(set_probe_bool_table);
                 }
             }
@@ -447,7 +449,7 @@ control ingress {
             apply(update_flow_count_table);
 
             //Take decision to send probe packet or not (Proactive)
-            if ((meta.server_flow1 + meta.server_flow2)*10 < (LOWER_LIMIT * SERVERS * THRESHOLD)){
+            if ((meta.server_flow1 + meta.server_flow2)*100 < (LOWER_LIMIT * SERVERS * THRESHOLD)){
                 if(meta.routing_port == 2 or meta.routing_port == 3){
                     //Find server with less number of flows
                     if(meta.server_flow1 < meta.server_flow2){

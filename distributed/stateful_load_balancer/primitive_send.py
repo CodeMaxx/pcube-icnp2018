@@ -53,7 +53,7 @@ def main():
         for i in range(2):
             sleep(0.1)
             fid = HOSTNAME*100+flow
-            p = LoadBalancePkt(fid=fid) / ("Data-"+str(fid) + "-" + str(i))
+            p = LoadBalancePkt(fid=fid) / ("Data-"+str(fid) + "-" + str(i) + "-" + str(i))
             print p.show()
             sendp(p, iface = "eth0")
 
