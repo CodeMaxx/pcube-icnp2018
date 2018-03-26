@@ -5,7 +5,7 @@ from scapy.all import Packet
 from scapy.all import IntField, LongField
 
 import sys
-from random import seed,uniform,choice
+from random import seed,uniform
 import threading
 from time import sleep
 
@@ -31,8 +31,7 @@ CHANGE_FREQUENCY = 20
 experiment_starts = datetime.now()
 num_threads = 8
 np.random.seed(0)
-thread_sleep = [0,3]
-globals()["probabilities"] = [0.95,0.05]
+
 seed(101)
 
 class LoadBalancePkt(Packet):
@@ -42,8 +41,6 @@ class LoadBalancePkt(Packet):
 		IntField("syn", 0),
 		IntField("fin", 0),
 		IntField("fid",0),
-		IntField("subfid",0),
-		IntField("packet_id",0),
 		IntField("hash",0),
 		IntField("count",0),
 		IntField("swid", 0),
@@ -62,98 +59,68 @@ class Flow(threading.Thread):
 		fid = self.fid
 		subfid = 0
 		change_frequency = CHANGE_FREQUENCY 
-		means = [0.01, 0.1]
-		mean = choice(means)
+		means = [0.02, 0.2]
+		k = 0
 		experiment_starts_timestamp = experiment_starts.timestamp()
 
 		log = open('timelog/' + str(fid) + '.log', 'w')
 
 		while (datetime.now() - experiment_starts).total_seconds() < total_exp_time:
-	
-			sleep(np.random.choice(thread_sleep, p=globals()["probabilities"]))
-
 			subfid += 1
 			time_gone = datetime.now() - self.modified_at
 			if(time_gone.total_seconds() > total_exp_time/change_frequency):
-				globals()["probabilities"] = [0.05,0.95]
 				self.modified_at = datetime.now()
-				mean = choice(means)
+				k += 1
+				k = k % len(means)
+			mean = means[k]
 			delay = 0
 			while delay <= 0:
 				delay = np.random.normal(mean, 0.1*mean)
 
 			payload = "SYN-" + str(fid) + "-" + str(subfid)
-			p = LoadBalancePkt(syn=1, fid=fid, subfid=subfid, packet_id=0) / payload
+			p = LoadBalancePkt(syn=1  , fid=fid) / payload
 			print('syn'+str(fid) + "-" + str(subfid))
 			p.show()
 			sleep(delay)
 			sendp(p, iface = IFACE)
 			log.write(str(datetime.now().timestamp() -
-                            experiment_starts_timestamp) + " %d %d %d\n"%(1,fid,subfid))
+                            experiment_starts_timestamp) + "\n")
 
 			# print(fid)
 			for i in range(int(uniform(MIN_PACKET_NUM,MAX_PACKET_NUM))):
 				payload = "Data-" + str(fid) + "-" + str(subfid) + '-' + ((str(i)+'-')*int(uniform(MIN_PACKET_LENGTH,MAX_PACKET_LENGTH)))
-				p = LoadBalancePkt(fid=fid, subfid=subfid, packet_id=i) / payload
+				p = LoadBalancePkt(fid=fid) / payload
 				p.show()
 				sleep(delay)
 				sendp(p, iface = IFACE)
-				log.write(str(datetime.now().timestamp() - experiment_starts_timestamp) + " %d %d %d\n"%(0,fid,subfid))
+				log.write(str(datetime.now().timestamp() - experiment_starts_timestamp) + "\n")
 
 			payload = "FIN-" + str(fid) + "-" + str(subfid)
-			p = LoadBalancePkt(fin=1, fid=fid, subfid=subfid, packet_id=i) / payload
+			p = LoadBalancePkt(fin=1, fid=fid) / payload
 			p.show()
 			sleep(delay)
 			sendp(p, iface = IFACE)
-			log.write(str(datetime.now().timestamp() - experiment_starts_timestamp) + " %d %d %d\n"%(2,fid,subfid))
+			log.write(str(datetime.now().timestamp() - experiment_starts_timestamp) + "\n")
 		
 		log.close()
 
 def draw_histogram():
 	x = []
-	syn,fin = [], []
-	fmap = {}
 	for i in range(num_threads):
 		fid = (HOSTNAME * FLOW_THRESHOLD) + i
 		with open("timelog/" + str(fid) + '.log') as f:
-			for row in f:
-				time,index,fid,subfid = row.split()
-				time,index = float(time), int(index)
-				x.append(time)
-				if index == 1: 
-					syn.append(time)
-					fmap[(fid,subfid)] = {'syn':time}
-				elif index == 2: 
-					fin.append(time)
-					fmap[(fid,subfid)]['fin'] = time
+			x += [float(j) for j in f.read().split()]
+
 
 	x.sort()
-	flow_rate,STEP = [], 0.5
-	for i in np.arange(0,int(x[-1])+1,STEP):
-		fcount = 0
-		for k in fmap:
-			if fmap[k]['syn'] < i and fmap[k]['fin'] >i:
-				fcount += 1
-		flow_rate.append(fcount)
-
-	pd.DataFrame(x).plot(kind='density',figsize=(total_exp_time,1))
-	for s in syn: plt.axvline(s,color='r')
-	for f in fin: plt.axvline(f,color='g')
-	ax = plt.gca()
-	ax.set_xlim((x[0],x[-1]))
+	pd.DataFrame(x).plot(kind='density')
 	plt.ylabel('Percentage')
 	plt.show()
-
-	plt.plot(np.arange(0,int(x[-1])+1,STEP),flow_rate)
-	ax = plt.gca()
-	ax.set_ylim((0,num_threads+2))
-	plt.show()
+	# print(x)
 
 def start_threads():
 	threadLock = threading.Lock()
 	threads = []
-
-	
 
 	for i in range(num_threads):
 		try:

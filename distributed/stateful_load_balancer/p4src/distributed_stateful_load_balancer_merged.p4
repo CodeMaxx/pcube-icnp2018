@@ -18,8 +18,8 @@
 #define UPPER_LIMIT 80
 #define LOWER_LIMIT 20
 #define SERVERS 2
-#define THRESHOLD 4
-#define SQTHRESHOLD 25
+#define THRESHOLD 10
+#define SQTHRESHOLD 121
 
 // -------------------- Headers ------------------------
 
@@ -29,6 +29,8 @@ header_type load_balancer_t {
         syn: 32;
         fin: 32;
         fid: 32;
+        subfid : 32;
+        packet_id : 32;
         hash : 32;
         _count : 32;
     }
