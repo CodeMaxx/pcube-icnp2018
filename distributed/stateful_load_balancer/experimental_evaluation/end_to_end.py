@@ -36,7 +36,9 @@ def end_to_end_latency():
         
         # Get all flow packets sent out by the user
         all_outgoing_flow_packets = filter(lambda packet: 
-            packet[0]['Raw'].load.startswith(b"Data") or packet[0]['Raw'].load.startswith(b"SYN") or packet[0]['Raw'].load.startswith(b"FIN"),
+            packet[0]['Raw'].load.startswith(b"Data") or (packet[0]['Raw'].load.startswith(b"SYN") and 
+                packet[0].preamble == 0) or (packet[0]['Raw'].load.startswith(b"FIN") and 
+                packet[0].preamble == 0),
              [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
         
         # Go through all the packets sent out by user
@@ -46,8 +48,6 @@ def end_to_end_latency():
             # p.show()
             p_loadbal_layer = p['LoadBalancePkt']
             p_raw = str(p['Raw'].load)
-            # Extract the packet number for this fid
-            p_flow_pkt_no = p_raw[nfind(p_raw,'-',2) + 1: nfind(p_raw,'-',3)]
             # print(p_flow_pkt_no)        
             
             # Go through all the switch-server links to find where this packet was finally sent
@@ -60,23 +60,25 @@ def end_to_end_latency():
                     for packet_match in incoming_packets:
                         pkm = LoadBalancePkt(bytes(packet_match))
                         raw = str(pkm['Raw'].load)
-                        flow_pkt_num = raw[nfind(raw,'-',2) + 1: nfind(raw,'-',3)]
                         # pkm.show()
 
+                        if pkm['LoadBalancePkt'].preamble != 0:
+                            continue
+
                         # For SYN packets
-                        if p_loadbal_layer.fid == pkm['LoadBalancePkt'].fid and pkm['LoadBalancePkt'].syn == 1 and p['LoadBalancePkt'].syn == 1:
+                        if p_loadbal_layer.fid == pkm['LoadBalancePkt'].fid and p_loadbal_layer.subfid == pkm['LoadBalancePkt'].subfid and pkm['LoadBalancePkt'].syn == 1 and p_loadbal_layer.syn == 1:
                             total_time += packet_match.time - pkt[1]
                             num_data_packets += 1
                             break
                         
                         # For FIN packets
-                        if p_loadbal_layer.fid == pkm['LoadBalancePkt'].fid and pkm['LoadBalancePkt'].fin == 1 and p['LoadBalancePkt'].fin == 1:
+                        if p_loadbal_layer.fid == pkm['LoadBalancePkt'].fid and p_loadbal_layer.subfid == pkm['LoadBalancePkt'].subfid and pkm['LoadBalancePkt'].fin == 1 and p_loadbal_layer.fin == 1:
                             total_time += packet_match.time - pkt[1]
                             num_data_packets += 1
                             break
                                 
                         # For Data packets
-                        if p_loadbal_layer.fid == pkm['LoadBalancePkt'].fid and flow_pkt_num.isdigit() and flow_pkt_num == p_flow_pkt_no:
+                        if p_loadbal_layer.fid == pkm['LoadBalancePkt'].fid and p_loadbal_layer.subfid == pkm['LoadBalancePkt'].subfid and p_loadbal_layer.packet_id == pkm['LoadBalancePkt'].packet_id:
                             total_time += packet_match.time - pkt[1]
                             num_data_packets += 1
                             break

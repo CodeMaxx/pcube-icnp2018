@@ -43,6 +43,8 @@ class LoadBalancePkt(Packet):
         IntField("syn", 0),
         IntField("fin", 0),
         IntField("fid",0),
+        IntField("subfid", 0),
+        IntField("packet_id", 0),
         IntField("hash",0),
         IntField("count",0),
         IntField("swid", 0),
