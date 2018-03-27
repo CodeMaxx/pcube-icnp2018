@@ -50,7 +50,6 @@ def avg_data_forwarding_time():
             p_loadbal_layer = p['LoadBalancePkt']
             p_raw = str(p['Raw'].load)
             # Extract the packet number for this fid
-            p_flow_pkt_no = p_raw[nfind(p_raw,'-',1) + 1: nfind(p_raw,'-',2)]
 
             # If p is not a Data packet
             if not p['Raw'].load.startswith(b"Data"):
@@ -62,11 +61,10 @@ def avg_data_forwarding_time():
             for packet_match in all_outgoing_flow_packets:
                 # packet_match[0].show()
                 raw = str(packet_match[0]['Raw'].load)
-                # print("Debug", packet_match[0]['Raw'])
-                flow_pkt_num = raw[nfind(raw,'-',1) + 1: nfind(raw,'-',2)]
-                # print(raw, nfind(raw,'-',1) + 1, nfind(raw,'-',2), p_loadbal_layer.fid, packet_match[0]['LoadBalancePkt'].fid, flow_pkt_num.isdigit(), flow_pkt_num, p_flow_pkt_no)
                 # If the packets match then find the forwarding time for the packet
-                if p_loadbal_layer.fid == packet_match[0]['LoadBalancePkt'].fid and flow_pkt_num.isdigit() and flow_pkt_num == p_flow_pkt_no:
+                if p_loadbal_layer.fid == packet_match[0]['LoadBalancePkt'].fid and \
+                    p_loadbal_layer.subfid == packet_match[0]['LoadBalancePkt'].subfid and \
+                    p_loadbal_layer.packet_id == packet_match[0]['LoadBalancePkt'].packet_id:
                     total_time += packet_match[1] - packet.time
                     num_data_packets += 1
                     k = False

@@ -42,23 +42,24 @@ def avg_syn_decision_time():
                 continue
             # Filter out all the SYN packets and convert them to LoadBalancerPkt
             # Also store the timestamp of the packets
-            all_outgoing_flow_packets += filter(lambda packet: packet[0]['Raw'].load.startswith(b"SYN"), [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
+            all_outgoing_flow_packets += filter(lambda packet: packet[0]['Raw'].load.startswith(b"SYN") and 
+                packet[0].preamble == 0, [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
         # For all the user packets
         for packet in host_packets:
             p = LoadBalancePkt(bytes(packet))
             p_loadbal_layer = p['LoadBalancePkt']
             # If p is not a SYN packet
-            if not p['Raw'].load.startswith(b"SYN"):
+            if not (p['Raw'].load.startswith(b"SYN") and p['LoadBalancePkt'].preamble == 0):
                 continue
 
             bla += 1
             # Find packet matching the host packet
             for packet_match in all_outgoing_flow_packets:
                 # If the packets match then find the decision + forwarding time for the packet
-                if p_loadbal_layer.fid == packet_match[0]['LoadBalancePkt'].fid:
+                if p_loadbal_layer.fid == packet_match[0]['LoadBalancePkt'].fid and p_loadbal_layer.subfid == packet_match[0]['LoadBalancePkt'].subfid:
                     total_time += packet_match[1] - packet.time
                     num_syn_packets += 1
-                    break
+                    break  
 
     avg_time = total_time/num_syn_packets
 
