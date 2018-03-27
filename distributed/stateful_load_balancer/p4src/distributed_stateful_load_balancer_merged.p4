@@ -15,7 +15,7 @@
 
 // ------------------ Constants --------------------
 
-#define UPPER_LIMIT 80
+#define UPPER_LIMIT 50
 #define LOWER_LIMIT 20
 #define SERVERS 2
 #define THRESHOLD 10
