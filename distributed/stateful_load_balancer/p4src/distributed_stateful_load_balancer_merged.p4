@@ -15,11 +15,11 @@
 
 // ------------------ Constants --------------------
 
-#define UPPER_LIMIT 50
+#define UPPER_LIMIT 80
 #define LOWER_LIMIT 20
 #define SERVERS 2
-#define THRESHOLD 10
-#define SQTHRESHOLD 121
+#define THRESHOLD 15
+#define SQTHRESHOLD 256
 
 // -------------------- Headers ------------------------
 

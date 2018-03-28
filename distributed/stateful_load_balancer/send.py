@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from scapy.all import sniff, sendp
+from scapy.all import sendp
 from scapy.all import Packet
 from scapy.all import IntField, LongField
 
@@ -23,17 +23,23 @@ HOSTNAME = int(sys.argv[1])
 total_exp_time = int(sys.argv[2])
 
 IFACE = "eth0"
-THREAD_THRESHOLD = 50
-MIN_SLEEP, MAX_SLEEP = 0.0, 0.3
-MIN_PACKET_NUM, MAX_PACKET_NUM = 28, 30
+THREAD_THRESHOLD = 100
+FLOW_LENGTH = [30,200,1000]
+FLOW_LENGTH_PROB = [1,0,0]
 MIN_PACKET_LENGTH, MAX_PACKET_LENGTH = 5,20
-CHANGE_FREQUENCY = 20
+
+CHANGE_FREQUENCIES = [10,30,50]
+CHANGE_FREQUENCIES_PROB = [0.1,0.8,0.1]
+CURR_FREQ = np.random.choice(CHANGE_FREQUENCIES, p=CHANGE_FREQUENCIES_PROB)
+
 experiment_starts = datetime.now()
+
 num_threads = 30
-np.random.seed(0)
-thread_sleep = [0,10]
-globals()["probabilities"] = [0.95,0.05]
+thread_sleep = [0,CURR_FREQ]
+globals()["probabilities"] = [0.99,0.01]
+
 seed(101)
+np.random.seed(0)
 
 class LoadBalancePkt(Packet):
 	name = "LoadBalancePkt"
@@ -59,27 +65,31 @@ class Flow(threading.Thread):
 		self.modified_at = datetime.now()
 
 	def run(self):
+
+		sleep(np.random.choice([0.5,1,1.5], p=[0.25,0.5,0.25]))
+
 		fid = self.fid
 		subfid = 0
-		change_frequency = CHANGE_FREQUENCY 
-		means = [0.0001, 0.001]
+		means = [1e-5, 1e-4]
 		mean = choice(means)
+		curr_freq = CURR_FREQ
 		experiment_starts_timestamp = experiment_starts.timestamp()
-
 		log = open('timelog/' + str(fid) + '.log', 'w')
 
-		while (datetime.now() - experiment_starts).total_seconds() < total_exp_time:
+		while (datetime.now() - self.created_at).total_seconds() < total_exp_time:
 	
-
 			subfid += 1
 			time_gone = datetime.now() - self.modified_at
-			if(time_gone.total_seconds() > total_exp_time/change_frequency):
-			# if(time_gone.total_seconds() > change_frequency):
+			t_sleep = thread_sleep 
+			# if(time_gone.total_seconds() > total_exp_time/CURR_FREQ):
+			if(time_gone.total_seconds() > CURR_FREQ):
+				curr_freq = np.random.choice(CHANGE_FREQUENCIES, p=CHANGE_FREQUENCIES_PROB)
+				t_sleep = [0,curr_freq]
 				globals()["probabilities"].reverse()
 				self.modified_at = datetime.now()
 				mean = choice(means)
 
-			sleep(np.random.choice(thread_sleep, p=globals()["probabilities"]))
+			sleep(np.random.choice(t_sleep, p=globals()["probabilities"]))
 
 			delay = 0
 			while delay <= 0:
@@ -94,8 +104,7 @@ class Flow(threading.Thread):
 			log.write(str(datetime.now().timestamp() -
                             experiment_starts_timestamp) + " %d %d %d\n"%(1,fid,subfid))
 
-			# print(fid)
-			for i in range(int(uniform(MIN_PACKET_NUM,MAX_PACKET_NUM))):
+			for i in range(np.random.choice(FLOW_LENGTH, p=FLOW_LENGTH_PROB)):
 				payload = "Data-" + str(fid) + "-" + str(subfid) + '-' + ((str(i)+'-')*int(uniform(MIN_PACKET_LENGTH,MAX_PACKET_LENGTH)))
 				p = LoadBalancePkt(fid=fid, subfid=subfid, packet_id=i) / payload
 				p.show()
@@ -111,6 +120,17 @@ class Flow(threading.Thread):
 			log.write(str(datetime.now().timestamp() - experiment_starts_timestamp) + " %d %d %d\n"%(2,fid,subfid))
 		
 		log.close()
+
+
+class ConstFlow(threading.Thread):
+	
+	def __init__(self):
+		threading.Thread.__init__(self)
+
+	def run(self):
+		while((datetime.now() - experiment_starts).total_seconds() < total_exp_time):
+			p = LoadBalancePkt(fid=4294967295, subfid=4294967295, packet_id=4294967295) / ""
+			sendp(p, iface = IFACE)
 
 def draw_histogram():
 	x = []
@@ -146,16 +166,19 @@ def draw_histogram():
 	for f in fin: plt.axvline(f,color='g')
 	ax = plt.gca()
 	ax.set_xlim((x[0],x[-1]))
-	plt.ylabel('Percentage')
+	plt.xlabel('Time (in seconds)');plt.ylabel('Percentage')
+	plt.savefig('packets_%d_%d_%d_%d.png'%(num_threads,CURR_FREQ,thread_sleep[1],total_exp_time), bbox_inches='tight')
 	plt.show()
-	# savefig('packets_%s_%s.png'%(num_threads,CHANGE_FREQUENCY), bbox_inches='tight')
 
 	pd.DataFrame(x).plot(kind='density')
+	plt.savefig('flow_density_%d_%d_%d_%d.png'%(num_threads,CURR_FREQ,thread_sleep[1],total_exp_time), bbox_inches='tight')
 	plt.show()
 
 	plt.plot(np.arange(0,int(x[-1])+1,STEP),flow_rate)
 	ax = plt.gca()
+	plt.xlabel('Time (in seconds)');plt.ylabel('Number of flows')
 	ax.set_ylim((0,num_threads+2))
+	plt.savefig('flows_%d_%d_%d_%d.png'%(num_threads,CURR_FREQ,thread_sleep[1],total_exp_time), bbox_inches='tight')
 	plt.show()
 
 def start_threads():
