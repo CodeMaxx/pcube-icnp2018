@@ -18,5 +18,6 @@ rm -rf pcap pcap.zip
 mkdir pcap
 cp ../*.pcap pcap/
 mv ../*.png pcap/
+mv ../*.info pcap/
 zip -r pcap.zip pcap/
 python3 all_stats.py
