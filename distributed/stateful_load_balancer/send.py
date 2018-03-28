@@ -28,15 +28,9 @@ FLOW_LENGTH = [30,200,1000]
 FLOW_LENGTH_PROB = [1,0,0]
 MIN_PACKET_LENGTH, MAX_PACKET_LENGTH = 5,20
 
-CHANGE_FREQUENCIES = [10,30,50]
-CHANGE_FREQUENCIES_PROB = [0.1,0.8,0.1]
-CURR_FREQ = np.random.choice(CHANGE_FREQUENCIES, p=CHANGE_FREQUENCIES_PROB)
-
 experiment_starts = datetime.now()
 
-num_threads = 30
-thread_sleep = [0,CURR_FREQ]
-globals()["probabilities"] = [0.99,0.01]
+NUM_THREADS = 30
 
 seed(101)
 np.random.seed(0)
@@ -63,6 +57,11 @@ class Flow(threading.Thread):
 		self.fid = fid
 		self.created_at = datetime.now()
 		self.modified_at = datetime.now()
+		self.time_step = [10,30,50]
+		self.time_step_prob = [0.1,0.8,0.1]
+		self.thread_sleep = [0,np.random.choice(self.time_step, p=self.time_step_prob)]
+		self.thread_sleep_prob = [0.99,0.01]
+
 
 	def run(self):
 
@@ -72,24 +71,25 @@ class Flow(threading.Thread):
 		subfid = 0
 		means = [1e-5, 1e-4]
 		mean = choice(means)
-		curr_freq = CURR_FREQ
+		curr_time_step = thread_sleep[1]
 		experiment_starts_timestamp = experiment_starts.timestamp()
 		log = open('timelog/' + str(fid) + '.log', 'w')
 
-		while (datetime.now() - self.created_at).total_seconds() < total_exp_time:
+		while (datetime.now() - experiment_starts).total_seconds() < total_exp_time:
 	
 			subfid += 1
 			time_gone = datetime.now() - self.modified_at
 			t_sleep = thread_sleep 
-			# if(time_gone.total_seconds() > total_exp_time/CURR_FREQ):
-			if(time_gone.total_seconds() > CURR_FREQ):
-				curr_freq = np.random.choice(CHANGE_FREQUENCIES, p=CHANGE_FREQUENCIES_PROB)
-				t_sleep = [0,curr_freq]
-				globals()["probabilities"].reverse()
+			
+			if(time_gone.total_seconds() > curr_time_step):
+				curr_time_step = np.random.choice(self.time_step, p=self.time_step_prob)
+				self.thread_sleep = [0,curr_time_step]
+				self.thread_sleep_prob.reverse()
 				self.modified_at = datetime.now()
 				mean = choice(means)
 
-			sleep(np.random.choice(t_sleep, p=globals()["probabilities"]))
+			if self.fid != 0:
+				sleep(np.random.choice(self.thread_sleep, p=self.thread_sleep_prob))
 
 			delay = 0
 			while delay <= 0:
@@ -136,7 +136,7 @@ def draw_histogram():
 	x = []
 	syn,fin = [], []
 	fmap = {}
-	for i in range(num_threads):
+	for i in range(NUM_THREADS):
 		fid = (HOSTNAME * THREAD_THRESHOLD) + i
 		with open("timelog/" + str(fid) + '.log') as f:
 			for row in f:
@@ -166,26 +166,29 @@ def draw_histogram():
 	for f in fin: plt.axvline(f,color='g')
 	ax = plt.gca()
 	ax.set_xlim((x[0],x[-1]))
-	plt.xlabel('Time (in seconds)');plt.ylabel('Percentage')
-	plt.savefig('packets_%d_%d_%d_%d.png'%(num_threads,CURR_FREQ,thread_sleep[1],total_exp_time), bbox_inches='tight')
+	plt.xlabel('Time (in seconds)');plt.ylabel('Percentage of packets')
+	plt.savefig('packets_%d_%d.png'%(NUM_THREADS, total_exp_time), bbox_inches='tight')
 	plt.show()
 
-	pd.DataFrame(x).plot(kind='density')
-	plt.savefig('flow_density_%d_%d_%d_%d.png'%(num_threads,CURR_FREQ,thread_sleep[1],total_exp_time), bbox_inches='tight')
+	pd.DataFrame(flow_rate_smooth).plot(kind='density')
+	ax = plt.gca()
+	ax.set_xlim((flow_rate_smooth[0],flow_rate_smooth[-1]))
+	plt.xlabel('Time (in seconds)');plt.ylabel('Percentage of flows')
+	plt.savefig('flow_density_%d_%d.png'%(NUM_THREADS, total_exp_time), bbox_inches='tight')
 	plt.show()
 
 	plt.plot(np.arange(0,int(x[-1])+1,STEP),flow_rate)
 	ax = plt.gca()
 	plt.xlabel('Time (in seconds)');plt.ylabel('Number of flows')
-	ax.set_ylim((0,num_threads+2))
-	plt.savefig('flows_%d_%d_%d_%d.png'%(num_threads,CURR_FREQ,thread_sleep[1],total_exp_time), bbox_inches='tight')
+	ax.set_ylim((0,NUM_THREADS+2))
+	plt.savefig('flows_%d_%d.png'%(NUM_THREADS, total_exp_time), bbox_inches='tight')
 	plt.show()
 
 def start_threads():
 	threadLock = threading.Lock()
 	threads = []
 
-	for i in range(num_threads):
+	for i in range(NUM_THREADS):
 		try:
 			t = Flow((HOSTNAME * THREAD_THRESHOLD) + i)
 			t.start()
