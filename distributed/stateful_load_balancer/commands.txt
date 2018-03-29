@@ -24,6 +24,7 @@ table_set_default update_flow_count_table update_flow_count
 table_set_default update_min_flow_len1_table2 update_min_flow_len1
 table_set_default update_min_flow_len2_table2 update_min_flow_len2
 table_set_default send_broadcast_update_table send_broadcast_update
+table_set_default drop_table _drop
 mirroring_add 2 2
 mirroring_add 3 3
 mirroring_add 4 4

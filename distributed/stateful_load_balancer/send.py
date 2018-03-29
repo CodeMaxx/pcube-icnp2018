@@ -32,7 +32,7 @@ EXPERIMENT_STARTS = datetime.now()
 NUM_THREADS = 30
 
 TIME_STEP = [10,30,50]
-TIME_STEP_PROB = [0.1,0.8,0.1]
+TIME_STEP_PROB = [0.05,0.05,0.9]
 
 FLOW_LENGTH = [30,200,1000]
 FLOW_LENGTH_PROB = [1,0,0]
@@ -64,10 +64,10 @@ class Flow(threading.Thread):
 		self.fid = fid
 		self.created_at = datetime.now()
 		self.modified_at = datetime.now()
-		self.time_step = TIME_STEP
-		self.time_step_prob = TIME_STEP_PROB
+		self.time_step = list(TIME_STEP)
+		self.time_step_prob = list(TIME_STEP_PROB)
 		self.thread_sleep = [0,np.random.choice(self.time_step, p=self.time_step_prob)]
-		self.thread_sleep_prob = THREAD_SLEEP_PROB
+		self.thread_sleep_prob = list(THREAD_SLEEP_PROB)
 
 
 	def run(self):
@@ -94,7 +94,7 @@ class Flow(threading.Thread):
 				self.modified_at = datetime.now()
 				mean = choice(means)
 
-			if self.fid != 0:
+			if self.fid < 1:
 				sleep(np.random.choice(self.thread_sleep, p=self.thread_sleep_prob))
 
 			delay = 0
@@ -103,8 +103,7 @@ class Flow(threading.Thread):
 
 			payload = "SYN-" + str(fid) + "-" + str(subfid)
 			p = LoadBalancePkt(syn=1, fid=fid, subfid=subfid, packet_id=0) / payload
-			print('syn'+str(fid) + "-" + str(subfid))
-			p.show()
+			# p.show()
 			sleep(delay)
 			sendp(p, iface = IFACE)
 			log.write(str(datetime.now().timestamp() -
@@ -113,14 +112,14 @@ class Flow(threading.Thread):
 			for i in range(np.random.choice(FLOW_LENGTH, p=FLOW_LENGTH_PROB)):
 				payload = "Data-" + str(fid) + "-" + str(subfid) + '-' + ((str(i)+'-')*int(uniform(MIN_PACKET_LENGTH,MAX_PACKET_LENGTH)))
 				p = LoadBalancePkt(fid=fid, subfid=subfid, packet_id=i) / payload
-				p.show()
+				# p.show()
 				sleep(delay)
 				sendp(p, iface = IFACE)
 				log.write(str(datetime.now().timestamp() - EXPERIMENT_STARTS_timestamp) + " %d %d %d\n"%(0,fid,subfid))
 
 			payload = "FIN-" + str(fid) + "-" + str(subfid)
 			p = LoadBalancePkt(fin=1, fid=fid, subfid=subfid, packet_id=i) / payload
-			p.show()
+			# p.show()
 			sleep(delay)
 			sendp(p, iface = IFACE)
 			log.write(str(datetime.now().timestamp() - EXPERIMENT_STARTS_timestamp) + " %d %d %d\n"%(2,fid,subfid))
@@ -174,21 +173,21 @@ def draw_histogram():
 	ax.set_xlim((x[0],x[-1]))
 	plt.xlabel('Time (in seconds)');plt.ylabel('Percentage of packets')
 	plt.savefig('packets_%d_%d.png'%(NUM_THREADS, TOTAL_EXP_TIME), bbox_inches='tight')
-	plt.show()
+	# plt.show()
 
 	pd.DataFrame(flow_rate_smooth).plot(kind='density')
 	ax = plt.gca()
 	ax.set_xlim((flow_rate_smooth[0],flow_rate_smooth[-1]))
 	plt.xlabel('Time (in seconds)');plt.ylabel('Percentage of flows')
 	plt.savefig('flow_density_%d_%d.png'%(NUM_THREADS, TOTAL_EXP_TIME), bbox_inches='tight')
-	plt.show()
+	# plt.show()
 
 	plt.plot(np.arange(0,int(x[-1])+1,STEP),flow_rate)
 	ax = plt.gca()
 	plt.xlabel('Time (in seconds)');plt.ylabel('Number of flows')
 	ax.set_ylim((0,NUM_THREADS+2))
 	plt.savefig('flows_%d_%d.png'%(NUM_THREADS, TOTAL_EXP_TIME), bbox_inches='tight')
-	plt.show()
+	# plt.show()
 
 def start_threads():
 	threadLock = threading.Lock()
