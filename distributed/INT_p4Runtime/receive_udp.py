@@ -102,16 +102,16 @@ def handle_pkt(pkt):
     global total_packets_recvd
     if total_packets_recvd == 0:
         experiment_starts = datetime.now()
-    
+
     dirpath = os.getcwd()
     #print("current directory is : " + dirpath)
     foldername = os.path.basename(dirpath)
     #print("Directory name is : " + foldername)
-    rfile = open(dirpath+"/../INT_udp_results.txt","a")
+    rfile = open(dirpath+"/INT_udp_results.txt","a")
     #print("got a packet")
     #print("pkt length=")
     #print(len(pkt))
-    #pkt.show2()
+    pkt.show2()
     #print "IP src =" ,
     #print pkt[IP].src
 
@@ -179,7 +179,7 @@ def main():
     print("sniffing on %s" % iface)
     sys.stdout.flush()
     #print ("before sniff")
-    sniff(filter="udp and ip", iface = iface,
+    sniff(filter="udp", iface = iface,
           prn = lambda x: handle_pkt(x))
     #print("total_packets_recvd = ",total_packets_recvd)
 if __name__ == '__main__':
