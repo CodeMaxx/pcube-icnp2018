@@ -18,11 +18,10 @@
 # 1. End to End Latency
 ########################################################
 
-from scapy.all import rdpcap
-
 from utils import *
 
-def end_to_end_latency():
+def end_to_end_latency(pcap_data):
+    pcaps = pcap_data.pcaps
     avg_time = 0
     total_time = 0
     num_data_packets = 0
@@ -30,7 +29,7 @@ def end_to_end_latency():
     # Go through all users
     for i in range(1, NUM_SWITCHES+1):
         try:
-            outgoing_packets = rdpcap("pcap/s%d-eth1_out.pcap" % i)
+            outgoing_packets = pcaps[(i, 1, 'out')]
         except:
             continue
         
@@ -54,7 +53,7 @@ def end_to_end_latency():
             for j in range(1, NUM_SWITCHES+1):
                 for k in SERVER_PORTS:
                     try:
-                        incoming_packets = rdpcap("pcap/s%d-eth%d_in.pcap" % (j, k))
+                        incoming_packets = pcaps[(j, k, 'in')]
                     except:
                         continue
                     for packet_match in incoming_packets:
@@ -90,10 +89,11 @@ def end_to_end_latency():
     print("Average End to End latency: %s milliseconds" % str(avg_time*1000))
     print(bla)
 
-def main():
+def main(pcap_data):
     cprint("End to End Latency")
-    end_to_end_latency()
+    end_to_end_latency(pcap_data)
 
 
 if __name__ == '__main__':
-    main()
+    pcap_data = PcapData()
+    main(pcap_data)

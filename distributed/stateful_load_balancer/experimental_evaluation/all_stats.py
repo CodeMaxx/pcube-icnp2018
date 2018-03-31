@@ -26,13 +26,15 @@ import end_to_end
 
 from utils import *
 
-def main():
+
+def main(pcap_data):
     cprint("STATISTICS")
-    decision_time.main()
-    data_forwarding_time.main()
-    num_probe_packets.main()
-    link_traffic.main()
-    end_to_end.main()
+    decision_time.main(pcap_data)
+    data_forwarding_time.main(pcap_data)
+    num_probe_packets.main(pcap_data)
+    link_traffic.main(pcap_data)
+    end_to_end.main(pcap_data)
 
 if __name__ == '__main__':
-    main()
+    pcap_data = PcapData()
+    main(pcap_data)

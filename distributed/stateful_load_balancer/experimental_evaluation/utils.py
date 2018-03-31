@@ -16,6 +16,7 @@
 
 from scapy.all import Packet
 from scapy.all import IntField, LongField
+from scapy.all import rdpcap
 import os
 
 NUM_SWITCHES = 4
@@ -50,3 +51,20 @@ class LoadBalancePkt(Packet):
         IntField("swid", 0),
         IntField("flow_num", 0)
     ]
+
+class PcapData(object):
+    def __init__(self):
+        self.pcaps = {}
+        for i in range(1, NUM_SWITCHES + 1):
+            for j in range(1, NUM_PORTS + 1):
+                try:
+                    packets_out = rdpcap(PCAP_BASE_DIRECTORY + "s%d-eth%d_out.pcap" % (i, j))
+                    self.pcaps[(i, j, 'out')] = packets_out
+                except:
+                    pass
+                try:
+                    packets_in = rdpcap(PCAP_BASE_DIRECTORY + "s%d-eth%d_in.pcap" % (i, j))
+                    self.pcaps[(i, j, 'in')] = packets_in
+                except:
+                    pass
+        print("All pcaps read into memory...")

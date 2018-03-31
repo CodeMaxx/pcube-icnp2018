@@ -18,11 +18,10 @@
 # 1. Decision making time for SYN packets
 ########################################################
 
-from scapy.all import rdpcap
-
 from utils import *
 
-def avg_syn_decision_time():
+def avg_syn_decision_time(pcap_data):
+    pcaps = pcap_data.pcaps
     avg_time = 0
     total_time = 0
     num_syn_packets = 0
@@ -30,14 +29,14 @@ def avg_syn_decision_time():
     # Go through all users
     for i in range(1, NUM_SWITCHES + 1):
         try:
-            host_packets = rdpcap(PCAP_BASE_DIRECTORY + "s%d-eth1_out.pcap" % i)
+            host_packets = pcaps[(i, 1, "out")]
         except:
             continue
         all_outgoing_flow_packets = []
         # Go through all non-users on the switch and get packets going from switch to them
         for j in range(2, NUM_PORTS + 1):
             try:
-                outgoing_packets = rdpcap(PCAP_BASE_DIRECTORY + "s%d-eth%d_in.pcap" % (i, j))
+                outgoing_packets = pcaps[(i, j, "in")]
             except:
                 continue
             # Filter out all the SYN packets and convert them to LoadBalancerPkt
@@ -68,9 +67,10 @@ def avg_syn_decision_time():
     print("Average decision making time: %s milliseconds" % str(avg_time*1000))
     print(bla)
 
-def main():
+def main(pcap_data):
     cprint("Decision Making Time")
-    avg_syn_decision_time()
+    avg_syn_decision_time(pcap_data)
 
 if __name__ == '__main__':
-    main()
+    pcap_data = PcapData()
+    main(pcap_data)

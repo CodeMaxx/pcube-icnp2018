@@ -18,11 +18,10 @@
 # 1. Number of probe/update packets generated
 ########################################################
 
-from scapy.all import rdpcap
-
 from utils import *
 
-def num_probe_packets():
+def num_probe_packets(pcap_data):
+    pcaps = pcap_data.pcaps
     total_reactive = 0
     total_proactive = 0
 
@@ -34,7 +33,7 @@ def num_probe_packets():
         for j in SWITCH_PORTS:
             try:
                 # packets going out from a switch to other switches
-                outgoing_packets = rdpcap("pcap/s%d-eth%d_in.pcap" % (i, j))
+                outgoing_packets = pcaps[(i, j, "in")]
             except:
                 continue
             # Filter out all the probe packets
@@ -53,9 +52,10 @@ def num_probe_packets():
     print("Total Reactive Packets: %d" % total_reactive)
     print("Total Proactive Packets: %d" % total_proactive)
 
-def main():
+def main(pcap_data):
     cprint("Probe Packets")
-    num_probe_packets()
+    num_probe_packets(pcap_data)
 
 if __name__ == '__main__':
-    main()
+    pcap_data = PcapData()
+    main(pcap_data)
