@@ -15,7 +15,7 @@
 # limitations under the License.
 
 rm distributed_stateful_load_balancer_$1.json
-$rmpcap
+sudo rm -f *.pcap
 sudo mn -c
 THIS_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 

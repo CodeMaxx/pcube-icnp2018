@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-
-# Copyright 2018-present Akash Trehan
+# Copyright 2017-present Open Networking Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,11 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-rm -rf pcap pcap.zip
-mkdir pcap
-cp ../*.pcap pcap/
-mv ../*.png pcap/
-mv ../*.info pcap/
-zip -r pcap.zip pcap/
-python3 all_stats.py
+import psutil
+def check_listening_on_port(port):
+    for c in psutil.net_connections(kind='inet'):
+        if c.status == 'LISTEN' and c.laddr[1] == port:
+            return True
+    return False

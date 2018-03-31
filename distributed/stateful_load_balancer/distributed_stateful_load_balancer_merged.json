@@ -324,54 +324,40 @@
     "meter_arrays": [],
     "actions": [
         {
-            "name": "forward",
+            "name": "set_switch1_dest_port",
             "id": 0,
             "runtime_data": [],
             "primitives": [
                 {
-                    "op": "modify_field_with_hash_based_offset",
+                    "op": "register_write",
                     "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "meta",
-                                "hash"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x0"
-                        },
-                        {
-                            "type": "calculation",
-                            "value": "flow_register_index"
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x10000"
-                        }
-                    ]
-                },
-                {
-                    "op": "register_read",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "meta",
-                                "routing_port"
-                            ]
-                        },
                         {
                             "type": "register_array",
-                            "value": "flow_to_port_map_register"
+                            "value": "total_flow_count_register"
                         },
                         {
-                            "type": "field",
-                            "value": [
-                                "meta",
-                                "hash"
-                            ]
+                            "type": "hexstr",
+                            "value": "0x2"
+                        },
+                        {
+                            "type": "expression",
+                            "value": {
+                                "type": "expression",
+                                "value": {
+                                    "op": "+",
+                                    "left": {
+                                        "type": "field",
+                                        "value": [
+                                            "meta",
+                                            "switch_flow1"
+                                        ]
+                                    },
+                                    "right": {
+                                        "type": "hexstr",
+                                        "value": "0x1"
+                                    }
+                                }
+                            }
                         }
                     ]
                 },
@@ -386,30 +372,8 @@
                             ]
                         },
                         {
-                            "type": "field",
-                            "value": [
-                                "meta",
-                                "routing_port"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "load_balancer_head",
-                                "hash"
-                            ]
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "meta",
-                                "hash"
-                            ]
+                            "type": "hexstr",
+                            "value": "0x4"
                         }
                     ]
                 }
@@ -561,8 +525,100 @@
             ]
         },
         {
-            "name": "update_min_flow_len2",
+            "name": "forward",
             "id": 4,
+            "runtime_data": [],
+            "primitives": [
+                {
+                    "op": "modify_field_with_hash_based_offset",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "meta",
+                                "hash"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x0"
+                        },
+                        {
+                            "type": "calculation",
+                            "value": "flow_register_index"
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x10000"
+                        }
+                    ]
+                },
+                {
+                    "op": "register_read",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "meta",
+                                "routing_port"
+                            ]
+                        },
+                        {
+                            "type": "register_array",
+                            "value": "flow_to_port_map_register"
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "meta",
+                                "hash"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "standard_metadata",
+                                "egress_spec"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "meta",
+                                "routing_port"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "load_balancer_head",
+                                "hash"
+                            ]
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "meta",
+                                "hash"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "update_min_flow_len2",
+            "id": 5,
             "runtime_data": [],
             "primitives": [
                 {
@@ -580,101 +636,6 @@
                             "value": [
                                 "meta",
                                 "server_flow2"
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "update_flow_count",
-            "id": 5,
-            "runtime_data": [],
-            "primitives": [
-                {
-                    "op": "register_read",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "meta",
-                                "temp"
-                            ]
-                        },
-                        {
-                            "type": "register_array",
-                            "value": "total_flow_count_register"
-                        },
-                        {
-                            "type": "expression",
-                            "value": {
-                                "type": "expression",
-                                "value": {
-                                    "op": "-",
-                                    "left": {
-                                        "type": "field",
-                                        "value": [
-                                            "meta",
-                                            "routing_port"
-                                        ]
-                                    },
-                                    "right": {
-                                        "type": "hexstr",
-                                        "value": "0x2"
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                },
-                {
-                    "op": "add_to_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "meta",
-                                "temp"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "-0x1"
-                        }
-                    ]
-                },
-                {
-                    "op": "register_write",
-                    "parameters": [
-                        {
-                            "type": "register_array",
-                            "value": "total_flow_count_register"
-                        },
-                        {
-                            "type": "expression",
-                            "value": {
-                                "type": "expression",
-                                "value": {
-                                    "op": "-",
-                                    "left": {
-                                        "type": "field",
-                                        "value": [
-                                            "meta",
-                                            "routing_port"
-                                        ]
-                                    },
-                                    "right": {
-                                        "type": "hexstr",
-                                        "value": "0x2"
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "type": "field",
-                            "value": [
-                                "meta",
-                                "temp"
                             ]
                         }
                     ]
@@ -778,8 +739,59 @@
             ]
         },
         {
-            "name": "set_switch3_dest_port",
+            "name": "clear_map",
             "id": 7,
+            "runtime_data": [],
+            "primitives": [
+                {
+                    "op": "modify_field_with_hash_based_offset",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "meta",
+                                "hash"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x0"
+                        },
+                        {
+                            "type": "calculation",
+                            "value": "flow_register_index"
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x10000"
+                        }
+                    ]
+                },
+                {
+                    "op": "register_write",
+                    "parameters": [
+                        {
+                            "type": "register_array",
+                            "value": "flow_to_port_map_register"
+                        },
+                        {
+                            "type": "field",
+                            "value": [
+                                "meta",
+                                "hash"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x0"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "set_switch3_dest_port",
+            "id": 8,
             "runtime_data": [],
             "primitives": [
                 {
@@ -834,62 +846,6 @@
             ]
         },
         {
-            "name": "set_switch2_dest_port",
-            "id": 8,
-            "runtime_data": [],
-            "primitives": [
-                {
-                    "op": "register_write",
-                    "parameters": [
-                        {
-                            "type": "register_array",
-                            "value": "total_flow_count_register"
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x3"
-                        },
-                        {
-                            "type": "expression",
-                            "value": {
-                                "type": "expression",
-                                "value": {
-                                    "op": "+",
-                                    "left": {
-                                        "type": "field",
-                                        "value": [
-                                            "meta",
-                                            "switch_flow2"
-                                        ]
-                                    },
-                                    "right": {
-                                        "type": "hexstr",
-                                        "value": "0x1"
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "standard_metadata",
-                                "egress_spec"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x5"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "name": "update_switch_flow_count",
             "id": 9,
             "runtime_data": [],
@@ -933,19 +889,8 @@
             ]
         },
         {
-            "name": "_drop",
-            "id": 10,
-            "runtime_data": [],
-            "primitives": [
-                {
-                    "op": "drop",
-                    "parameters": []
-                }
-            ]
-        },
-        {
             "name": "update_map",
-            "id": 11,
+            "id": 10,
             "runtime_data": [],
             "primitives": [
                 {
@@ -998,119 +943,8 @@
             ]
         },
         {
-            "name": "send_probe",
-            "id": 12,
-            "runtime_data": [],
-            "primitives": [
-                {
-                    "op": "clone_ingress_pkt_to_egress",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "standard_metadata",
-                                "egress_spec"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x1"
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "load_balancer_head",
-                                "preamble"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x1"
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "intrinsic_metadata",
-                                "mcast_grp"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x1"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "set_switch1_dest_port",
-            "id": 13,
-            "runtime_data": [],
-            "primitives": [
-                {
-                    "op": "register_write",
-                    "parameters": [
-                        {
-                            "type": "register_array",
-                            "value": "total_flow_count_register"
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x2"
-                        },
-                        {
-                            "type": "expression",
-                            "value": {
-                                "type": "expression",
-                                "value": {
-                                    "op": "+",
-                                    "left": {
-                                        "type": "field",
-                                        "value": [
-                                            "meta",
-                                            "switch_flow1"
-                                        ]
-                                    },
-                                    "right": {
-                                        "type": "hexstr",
-                                        "value": "0x1"
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                },
-                {
-                    "op": "modify_field",
-                    "parameters": [
-                        {
-                            "type": "field",
-                            "value": [
-                                "standard_metadata",
-                                "egress_spec"
-                            ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x4"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             "name": "send_broadcast_update",
-            "id": 14,
+            "id": 11,
             "runtime_data": [],
             "primitives": [
                 {
@@ -1260,31 +1094,170 @@
             ]
         },
         {
-            "name": "clear_map",
-            "id": 15,
+            "name": "send_probe",
+            "id": 12,
             "runtime_data": [],
             "primitives": [
                 {
-                    "op": "modify_field_with_hash_based_offset",
+                    "op": "clone_ingress_pkt_to_egress",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "standard_metadata",
+                                "egress_spec"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x1"
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "load_balancer_head",
+                                "preamble"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x1"
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "intrinsic_metadata",
+                                "mcast_grp"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x1"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "set_switch2_dest_port",
+            "id": 13,
+            "runtime_data": [],
+            "primitives": [
+                {
+                    "op": "register_write",
+                    "parameters": [
+                        {
+                            "type": "register_array",
+                            "value": "total_flow_count_register"
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x3"
+                        },
+                        {
+                            "type": "expression",
+                            "value": {
+                                "type": "expression",
+                                "value": {
+                                    "op": "+",
+                                    "left": {
+                                        "type": "field",
+                                        "value": [
+                                            "meta",
+                                            "switch_flow2"
+                                        ]
+                                    },
+                                    "right": {
+                                        "type": "hexstr",
+                                        "value": "0x1"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "op": "modify_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "standard_metadata",
+                                "egress_spec"
+                            ]
+                        },
+                        {
+                            "type": "hexstr",
+                            "value": "0x5"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "update_flow_count",
+            "id": 14,
+            "runtime_data": [],
+            "primitives": [
+                {
+                    "op": "register_read",
                     "parameters": [
                         {
                             "type": "field",
                             "value": [
                                 "meta",
-                                "hash"
+                                "temp"
+                            ]
+                        },
+                        {
+                            "type": "register_array",
+                            "value": "total_flow_count_register"
+                        },
+                        {
+                            "type": "expression",
+                            "value": {
+                                "type": "expression",
+                                "value": {
+                                    "op": "-",
+                                    "left": {
+                                        "type": "field",
+                                        "value": [
+                                            "meta",
+                                            "routing_port"
+                                        ]
+                                    },
+                                    "right": {
+                                        "type": "hexstr",
+                                        "value": "0x2"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "op": "add_to_field",
+                    "parameters": [
+                        {
+                            "type": "field",
+                            "value": [
+                                "meta",
+                                "temp"
                             ]
                         },
                         {
                             "type": "hexstr",
-                            "value": "0x0"
-                        },
-                        {
-                            "type": "calculation",
-                            "value": "flow_register_index"
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x10000"
+                            "value": "-0x1"
                         }
                     ]
                 },
@@ -1293,20 +1266,47 @@
                     "parameters": [
                         {
                             "type": "register_array",
-                            "value": "flow_to_port_map_register"
+                            "value": "total_flow_count_register"
+                        },
+                        {
+                            "type": "expression",
+                            "value": {
+                                "type": "expression",
+                                "value": {
+                                    "op": "-",
+                                    "left": {
+                                        "type": "field",
+                                        "value": [
+                                            "meta",
+                                            "routing_port"
+                                        ]
+                                    },
+                                    "right": {
+                                        "type": "hexstr",
+                                        "value": "0x2"
+                                    }
+                                }
+                            }
                         },
                         {
                             "type": "field",
                             "value": [
                                 "meta",
-                                "hash"
+                                "temp"
                             ]
-                        },
-                        {
-                            "type": "hexstr",
-                            "value": "0x0"
                         }
                     ]
+                }
+            ]
+        },
+        {
+            "name": "_drop",
+            "id": 15,
+            "runtime_data": [],
+            "primitives": [
+                {
+                    "op": "drop",
+                    "parameters": []
                 }
             ]
         },

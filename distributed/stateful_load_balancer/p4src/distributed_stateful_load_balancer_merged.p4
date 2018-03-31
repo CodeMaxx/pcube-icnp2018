@@ -222,6 +222,12 @@ table forwarding_table {
     size: 1;
 }
 
+table drop_table {
+    actions {
+        _drop;
+    }
+    size: 1;}
+
 table send_probe_table {
     actions{
         send_probe;
@@ -416,10 +422,10 @@ control ingress {
             else{
                 //Choose from switches
                 apply(get_switch_flow_count_table);
-                /*if (meta.switch_flow1 >= THRESHOLD and meta.switch_flow2 >= THRESHOLD and meta.switch_flow3 >= THRESHOLD){
-                    drop();
-                }*/
-                if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3){
+                if (meta.switch_flow1 >= 2*THRESHOLD and meta.switch_flow2 >= 2*THRESHOLD and meta.switch_flow3 >= 2*THRESHOLD){
+                    
+                }
+                else if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3){
                     apply(set_switch1_dest_port_table);
                 }
                 else if(meta.switch_flow2 <= meta.switch_flow1 and meta.switch_flow2 <= meta.switch_flow3){
@@ -437,6 +443,10 @@ control ingress {
 
         //Forwarding
         apply(forwarding_table);
+
+        if (meta.routing_port == 0){
+            apply(drop_table);
+        }
 
         if(meta.probe_bool == 1){
             apply(send_probe_table);
