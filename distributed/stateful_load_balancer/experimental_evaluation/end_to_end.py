@@ -26,6 +26,27 @@ def end_to_end_latency(pcap_data):
     total_time = 0
     num_data_packets = 0
     bla = 0
+    outgoing_dict = {}
+
+    for j in range(1, NUM_SWITCHES+1):
+        for k in SERVER_PORTS:
+            try:
+                incoming_packets = pcaps[(j, k, 'in')]
+            except:
+                continue
+            for p in incoming_packets:
+                packet = LoadBalancePkt(bytes(p))
+                loadbal_layer = packet['LoadBalancePkt']
+                if packet['Raw'].load.startswith(b"Data"):
+                    outgoing_dict[(loadbal_layer.fid, loadbal_layer.subfid, loadbal_layer.packet_id, 0)] = (
+                        packet, p.time)
+                elif packet['Raw'].load.startswith(b"SYN") and packet.preamble == 0:
+                    outgoing_dict[(loadbal_layer.fid, loadbal_layer.subfid, loadbal_layer.packet_id, 1)] = (
+                        packet, p.time)
+                elif packet['Raw'].load.startswith(b"FIN") and packet.preamble == 0:
+                    outgoing_dict[(loadbal_layer.fid, loadbal_layer.subfid, loadbal_layer.packet_id, 2)] = (
+                        packet, p.time)
+
     # Go through all users
     for i in range(1, NUM_SWITCHES+1):
         try:
@@ -45,42 +66,29 @@ def end_to_end_latency(pcap_data):
             bla += 1
             p = pkt[0]
             # p.show()
-            p_loadbal_layer = p['LoadBalancePkt']
-            p_raw = str(p['Raw'].load)
-            # print(p_flow_pkt_no)        
+            p_loadbal_layer = p['LoadBalancePkt']       
             
             # Go through all the switch-server links to find where this packet was finally sent
-            for j in range(1, NUM_SWITCHES+1):
-                for k in SERVER_PORTS:
-                    try:
-                        incoming_packets = pcaps[(j, k, 'in')]
-                    except:
-                        continue
-                    for packet_match in incoming_packets:
-                        pkm = LoadBalancePkt(bytes(packet_match))
-                        raw = str(pkm['Raw'].load)
-                        # pkm.show()
-
-                        if pkm['LoadBalancePkt'].preamble != 0:
-                            continue
-
-                        # For SYN packets
-                        if p_loadbal_layer.fid == pkm['LoadBalancePkt'].fid and p_loadbal_layer.subfid == pkm['LoadBalancePkt'].subfid and pkm['LoadBalancePkt'].syn == 1 and p_loadbal_layer.syn == 1:
-                            total_time += packet_match.time - pkt[1]
-                            num_data_packets += 1
-                            break
-                        
-                        # For FIN packets
-                        if p_loadbal_layer.fid == pkm['LoadBalancePkt'].fid and p_loadbal_layer.subfid == pkm['LoadBalancePkt'].subfid and pkm['LoadBalancePkt'].fin == 1 and p_loadbal_layer.fin == 1:
-                            total_time += packet_match.time - pkt[1]
-                            num_data_packets += 1
-                            break
-                                
-                        # For Data packets
-                        if p_loadbal_layer.fid == pkm['LoadBalancePkt'].fid and p_loadbal_layer.subfid == pkm['LoadBalancePkt'].subfid and p_loadbal_layer.packet_id == pkm['LoadBalancePkt'].packet_id:
-                            total_time += packet_match.time - pkt[1]
-                            num_data_packets += 1
-                            break
+            try:
+                if p_loadbal_layer.syn == 1:
+                    packet_match = outgoing_dict[(
+                        p_loadbal_layer.fid, p_loadbal_layer.subfid, p_loadbal_layer.packet_id, 1)]
+                    total_time += packet_match[1] - pkt[1]
+                    num_data_packets += 1
+                elif p_loadbal_layer.fin == 1:
+                    packet_match = outgoing_dict[(
+                        p_loadbal_layer.fid, p_loadbal_layer.subfid, p_loadbal_layer.packet_id, 2)]
+                    total_time += packet_match[1] - pkt[1]
+                    num_data_packets += 1
+                else:
+                    packet_match = outgoing_dict[(
+                        p_loadbal_layer.fid, p_loadbal_layer.subfid, p_loadbal_layer.packet_id, 0)]
+                    total_time += packet_match[1] - pkt[1]
+                    num_data_packets += 1
+            except:
+                # import pdb; pdb.set_trace()
+                p.show()
+                # pass
 
     avg_time = total_time/num_data_packets
 
