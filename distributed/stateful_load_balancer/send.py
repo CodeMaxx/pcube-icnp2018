@@ -32,12 +32,13 @@ EXPERIMENT_STARTS = datetime.now()
 NUM_THREADS = 30
 
 TIME_STEP = [10,30,50]
-TIME_STEP_PROB = [0.05,0.05,0.9]
+TIME_STEP_PROB = [0.1,0.1,0.8]
 
 FLOW_LENGTH = [30,200,1000]
 FLOW_LENGTH_PROB = [1,0,0]
 
 THREAD_SLEEP_PROB = [0.99,0.01]
+###
 
 seed(101)
 np.random.seed(0)
@@ -72,7 +73,7 @@ class Flow(threading.Thread):
 
 	def run(self):
 
-		sleep(np.random.choice([0.5,1,1.5], p=[0.25,0.5,0.25]))
+		# sleep(np.random.choice([0.5,1,1.5], p=[0.25,0.5,0.25]))
 
 		fid = self.fid
 		subfid = 0
@@ -94,7 +95,7 @@ class Flow(threading.Thread):
 				self.modified_at = datetime.now()
 				mean = choice(means)
 
-			if self.fid < 1:
+			if self.fid > 0:
 				sleep(np.random.choice(self.thread_sleep, p=self.thread_sleep_prob))
 
 			delay = 0
@@ -172,22 +173,22 @@ def draw_histogram():
 	ax = plt.gca()
 	ax.set_xlim((x[0],x[-1]))
 	plt.xlabel('Time (in seconds)');plt.ylabel('Percentage of packets')
-	plt.savefig('packets_%d_%d.png'%(NUM_THREADS, TOTAL_EXP_TIME), bbox_inches='tight')
+	plt.savefig('packets_%d_%d-%d.png'%(NUM_THREADS, TOTAL_EXP_TIME,HOSTNAME), bbox_inches='tight')
 	# plt.show()
 
 	pd.DataFrame(flow_rate_smooth).plot(kind='density')
 	ax = plt.gca()
 	ax.set_xlim((flow_rate_smooth[0],flow_rate_smooth[-1]))
 	plt.xlabel('Time (in seconds)');plt.ylabel('Percentage of flows')
-	plt.savefig('flow_density_%d_%d.png'%(NUM_THREADS, TOTAL_EXP_TIME), bbox_inches='tight')
+	plt.savefig('flow_density_%d_%d-%d.png'%(NUM_THREADS, TOTAL_EXP_TIME,HOSTNAME), bbox_inches='tight')
 	# plt.show()
 
 	plt.plot(np.arange(0,int(x[-1])+1,STEP),flow_rate)
 	ax = plt.gca()
 	plt.xlabel('Time (in seconds)');plt.ylabel('Number of flows')
 	ax.set_ylim((0,NUM_THREADS+2))
-	plt.savefig('flows_%d_%d.png'%(NUM_THREADS, TOTAL_EXP_TIME), bbox_inches='tight')
-	# plt.show()
+	plt.savefig('flows_%d_%d-%d.png'%(NUM_THREADS, TOTAL_EXP_TIME,HOSTNAME), bbox_inches='tight')
+	plt.show()
 
 def start_threads():
 	threadLock = threading.Lock()
@@ -205,7 +206,7 @@ def start_threads():
 		t.join()
 
 def experiment_info():
-	info = open('experiment.info', 'w')
+	info = open('experiment-%d.info'%HOSTNAME, 'w')
 	info.write("Experiment time = %ds\n"%TOTAL_EXP_TIME)
 	info.write("Number of threads = %d\n"%NUM_THREADS)
 	info.write("Time steps: [%d,%d,%d]\n"%tuple(TIME_STEP))
