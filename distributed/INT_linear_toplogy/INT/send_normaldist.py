@@ -89,7 +89,7 @@ class Flow(threading.Thread):
 			#pkt = pkt /IP(dst=addr) / UDP() / sys.argv[2]
 			#pkt = pkt /IP(dst=addr) / TCP(dport=port, sport=random.randint(49152,65535)) / sys.argv[2]
 			pkt = pkt /IP(dst=addr) / UDP(dport=1234, sport=random.randint(49152,65535)) / sys.argv[2]
-			#pkt.show2()
+			pkt.show2()
 			sendp(pkt, iface=iface, verbose=False)
 			log.write(str(datetime.now().timestamp() -
                             experiment_starts_timestamp) + "\n")

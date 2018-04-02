@@ -12,7 +12,7 @@
 control process_int_clone (inout headers hdr,inout metadata meta,inout standard_metadata_t standard_metadata) {
     // mon_dest_ip is the destination ip of the monitoring engine
     //mon_dmac is the destination mac of the monitoring engine
-    action set_mon_params(macAddr_t mon_dmac,ipAddr_t mon_dest_ip){
+    action set_mon_params(macAddr_t mon_dmac){
         hdr.ethernet.dstAddr = mon_dmac;
         //hdr.ipv4.dstAddr = mon_dest_ip;
     }
@@ -87,14 +87,31 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
     }
     apply{
      //clone packet from ingress to egress
-        clone(CloneType.I2E, CLONE_SESSION_ID);
+        if(standard_metadata.ingress_port==3){
+            clone(CloneType.I2E, CLONE_SESSION_ID);
 
-         if (hdr.ipv4.isValid()) {
-                 ipv4_lpm.apply();
-         }
-         //Int_transit_egress.apply(hdr, meta, standard_metadata);
+            // if (hdr.ipv4.isValid()) {
+            //         ipv4_lpm.apply();
+             //}
+             //Int_transit_egress.apply(hdr, meta, standard_metadata);
+             // if (hdr.ipv4.isValid()) {
+                //      ipv4_lpm.apply();
+              //}
 
-         process_int_sink.apply(hdr, meta, standard_metadata);
+             process_int_sink.apply(hdr, meta, standard_metadata);
+
+        }
+
+            if (hdr.ipv4.isValid()) {
+                    ipv4_lpm.apply();
+            }
+
+
+
+
+
+
+
 
     }
 }
@@ -103,13 +120,17 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
 control EgressImpl(inout headers hdr, inout metadata meta,inout standard_metadata_t standard_metadata)
 {
     apply{
+        if(standard_metadata.ingress_port==3){
+            if(standard_metadata.instance_type == 1){
+                process_int_clone.apply(hdr,meta,standard_metadata);
+            }
+            else {
+                //process_int_sink.apply(hdr, meta, standard_metadata);
+            }
 
-        if(standard_metadata.instance_type == 1){
-            process_int_clone.apply(hdr,meta,standard_metadata);
         }
-        else {
-            //process_int_sink.apply(hdr, meta, standard_metadata);
-        }
+
+
     }
 }
 

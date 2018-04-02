@@ -9,7 +9,7 @@ const bit<6> INT_DSCP = 0x1;
 #define IP_PROTO_TCP 8w6
 #define IP_PROTO_UDP 8w17
 const bit<8> INT_HEADER_LEN_WORD = 4;
-const bit<8> REMAINING_HOP_CNT = 5;
+const bit<8> REMAINING_HOP_CNT = 7;
 typedef bit<48> macAddr_t;
 typedef bit<32> ipAddr_t;
 const bit<32> CLONE_SESSION_ID = 500;

@@ -41,10 +41,5 @@ table_add int_inst_0407 int_set_header_0407_i14 14 =>
 table_add int_inst_0407 int_set_header_0407_i15 15 =>
 
 table_add ipv4_lpm ipv4_forward 10.0.1.1/32 => 00:00:00:00:01:01 1
-table_add ipv4_lpm ipv4_forward 10.0.3.2/32 => 00:00:00:00:03:02 2
-table_add ipv4_lpm ipv4_forward 10.0.3.3/32 => 00:00:00:00:03:03 2
-table_add ipv4_lpm ipv4_forward 10.0.5.2/32 => 00:00:00:00:05:02 2
-table_add ipv4_lpm ipv4_forward 10.0.5.3/32 => 00:00:00:00:05:03 2
-table_add ipv4_lpm ipv4_forward 10.0.4.2/32 => 00:00:00:00:04:02 1
-table_add ipv4_lpm ipv4_forward 10.0.5.5/32 => 00:00:00:00:05:05 2
-table_add ipv4_lpm ipv4_forward 10.0.1.1/32 => 00:00:00:00:01:01 1
+table_add ipv4_lpm ipv4_forward 10.0.8.2/32 => 00:00:00:00:08:02 2
+table_add ipv4_lpm ipv4_forward 10.0.8.3/32 => 00:00:00:00:08:03 2

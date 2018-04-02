@@ -94,9 +94,12 @@ inout standard_metadata_t standard_metadata)
         default_action = NoAction();
     }
     apply{
-        // initialize the INT header fields
-        process_int_source_headers.apply(hdr, meta, standard_metadata); // sets the INT header fields
-        // route the packet to the next hop based on the destination address
+        if(standard_metadata.ingress_port==1){
+            // initialize the INT header fields
+            process_int_source_headers.apply(hdr, meta, standard_metadata); // sets the INT header fields
+
+        }
+        // otherwise route the packet to the next hop based on the destination address
         if (hdr.ipv4.isValid()) {
                 ipv4_lpm.apply();
         }
@@ -106,7 +109,11 @@ control EgressImpl(inout headers hdr, inout metadata meta,
 inout standard_metadata_t standard_metadata)
 {
     apply{
-        Int_transit_egress.apply(hdr, meta, standard_metadata); //sets the INT stack to get metadata from the source switches
+        if(standard_metadata.ingress_port==1){
+            Int_transit_egress.apply(hdr, meta, standard_metadata); //sets the INT stack to get metadata from the source switches
+
+
+        }
     }
 }
 

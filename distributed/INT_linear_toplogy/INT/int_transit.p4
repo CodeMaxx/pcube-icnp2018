@@ -34,7 +34,7 @@ inout standard_metadata_t standard_metadata)
         default_action = NoAction();
     }
     apply{
-        /* fill in */
+
         if (hdr.ipv4.isValid()) {
                 ipv4_lpm.apply();
         }
@@ -44,7 +44,11 @@ inout standard_metadata_t standard_metadata)
 control EgressImpl(inout headers hdr, inout metadata meta,inout standard_metadata_t standard_metadata)
 {
     apply{
+        if(standard_metadata.ingress_port != 5){
             Int_transit_egress.apply(hdr, meta, standard_metadata);
+
+        }
+
     }
 }
 V1Switch(
