@@ -32,43 +32,40 @@ def avg_data_forwarding_time(pcap_data):
             host_packets = pcaps[(i, 1, "out")]
         except:
             continue
-        all_outgoing_flow_packets = []
+        outgoing_dict = {}
         # Go through all non-users on the switch and get packets going from switch to them
         for j in range(2, NUM_PORTS + 1):
             try:
                 outgoing_packets = pcaps[(i, j, "in")]
             except:
                 continue
-            # Filter out all the data packets and convert them to LoadBalancerPkt
             # Also store the timestamp of the packets
-            all_outgoing_flow_packets += filter(lambda packet: packet[0]['Raw'].load.startswith(b"Data"), [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
-
+            # all_outgoing_flow_packets += filter(lambda packet: packet[0]['Raw'].load.startswith(b"Data"), \
+            #     [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
+            # Filter out all the data packets and convert them to LoadBalancerPkt
+            for p in outgoing_packets:
+                packet = LoadBalancePkt(bytes(p))
+                if packet['Raw'].load.startswith(b"Data"):
+                    loadbal_layer = packet['LoadBalancePkt']
+                    outgoing_dict[(loadbal_layer.fid, loadbal_layer.subfid, loadbal_layer.packet_id)] = \
+                        (packet, p.time)
         # For all the user packets
         for packet in host_packets:
             p = LoadBalancePkt(bytes(packet))
             p_loadbal_layer = p['LoadBalancePkt']
-            p_raw = str(p['Raw'].load)
             # Extract the packet number for this fid
 
             # If p is not a Data packet
             if not p['Raw'].load.startswith(b"Data"):
                 continue
             bla +=1
-            k = True
 
-            # Find packet matching the host packet
-            for packet_match in all_outgoing_flow_packets:
-                # packet_match[0].show()
-                raw = str(packet_match[0]['Raw'].load)
-                # If the packets match then find the forwarding time for the packet
-                if p_loadbal_layer.fid == packet_match[0]['LoadBalancePkt'].fid and \
-                    p_loadbal_layer.subfid == packet_match[0]['LoadBalancePkt'].subfid and \
-                    p_loadbal_layer.packet_id == packet_match[0]['LoadBalancePkt'].packet_id:
-                    total_time += packet_match[1] - packet.time
-                    num_data_packets += 1
-                    k = False
-                    break
-            if k:
+            try:
+                packet_match = outgoing_dict[(
+                    p_loadbal_layer.fid, p_loadbal_layer.subfid, p_loadbal_layer.packet_id)]
+                total_time += packet_match[1] - packet.time
+                num_data_packets += 1
+            except:
                 p.show()
     avg_time = total_time/num_data_packets
 

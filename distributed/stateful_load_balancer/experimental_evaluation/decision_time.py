@@ -33,6 +33,7 @@ def avg_syn_decision_time(pcap_data):
         except:
             continue
         all_outgoing_flow_packets = []
+        outgoing_dict = {}
         # Go through all non-users on the switch and get packets going from switch to them
         for j in range(2, NUM_PORTS + 1):
             try:
@@ -41,8 +42,13 @@ def avg_syn_decision_time(pcap_data):
                 continue
             # Filter out all the SYN packets and convert them to LoadBalancerPkt
             # Also store the timestamp of the packets
-            all_outgoing_flow_packets += filter(lambda packet: packet[0]['Raw'].load.startswith(b"SYN") and 
-                packet[0].preamble == 0, [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
+            # all_outgoing_flow_packets += filter(lambda packet: packet[0]['Raw'].load.startswith(b"SYN") and 
+            #     packet[0].preamble == 0, [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
+            for p in outgoing_packets:
+                packet = LoadBalancePkt(bytes(p))
+                if packet['Raw'].load.startswith(b"SYN") and packet.preamble == 0:
+                    loadbal_layer = packet['LoadBalancePkt']
+                    outgoing_dict[(loadbal_layer.fid, loadbal_layer.subfid)] = (packet, p.time)
         # For all the user packets
         for packet in host_packets:
             p = LoadBalancePkt(bytes(packet))
@@ -53,12 +59,12 @@ def avg_syn_decision_time(pcap_data):
 
             bla += 1
             # Find packet matching the host packet
-            for packet_match in all_outgoing_flow_packets:
-                # If the packets match then find the decision + forwarding time for the packet
-                if p_loadbal_layer.fid == packet_match[0]['LoadBalancePkt'].fid and p_loadbal_layer.subfid == packet_match[0]['LoadBalancePkt'].subfid:
-                    total_time += packet_match[1] - packet.time
-                    num_syn_packets += 1
-                    break  
+            try:
+                packet_match=outgoing_dict[(p_loadbal_layer.fid, p_loadbal_layer.subfid)]
+                total_time += packet_match[1] - packet.time
+                num_syn_packets += 1
+            except:
+                p.show()
 
     avg_time = total_time/num_syn_packets
 

@@ -102,7 +102,7 @@ def handle_pkt(pkt):
     global total_packets_recvd
     if total_packets_recvd == 0:
         experiment_starts = datetime.now()
-    
+
     dirpath = os.getcwd()
     #print("current directory is : " + dirpath)
     foldername = os.path.basename(dirpath)
@@ -111,7 +111,7 @@ def handle_pkt(pkt):
     #print("got a packet")
     #print("pkt length=")
     #print(len(pkt))
-    #pkt.show2()
+    pkt.show2()
     #print "IP src =" ,
     #print pkt[IP].src
 
