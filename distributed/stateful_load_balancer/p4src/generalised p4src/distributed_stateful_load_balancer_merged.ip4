@@ -49,10 +49,9 @@ header_type meta_t {
     fields {
         temp : 32;
 
-            server_flow1 : 32;
-            server_flow2 : 32;
-            server_flow3 : 32;
-            server_flow4 : 32;
+        @for (i) [1,SERVERS,1]
+            server_flow$i : 32;
+        @endfor
 
         switch_flow1 : 32;
         switch_flow2 : 32;
@@ -133,30 +132,14 @@ table get_server_flow_count_table{
     size:1;
 }
 
-    table update_min_flow_len1_table1 {
+@for (i) [1,SERVERS,1]
+    table update_min_flow_len$i_table1 {
         actions{
-            update_min_flow_len1;
+            update_min_flow_len$i;
         }
         size: 1;
     }
-    table update_min_flow_len2_table1 {
-        actions{
-            update_min_flow_len2;
-        }
-        size: 1;
-    }
-    table update_min_flow_len3_table1 {
-        actions{
-            update_min_flow_len3;
-        }
-        size: 1;
-    }
-    table update_min_flow_len4_table1 {
-        actions{
-            update_min_flow_len4;
-        }
-        size: 1;
-    }
+@endfor
 
 table send_update_table {
     actions{
@@ -174,10 +157,9 @@ table update_switch_flow_count_table {
 
 table set_server_dest_port_table{
     reads{
-            meta.server_flow1 : exact;
-            meta.server_flow2 : exact;
-            meta.server_flow3 : exact;
-            meta.server_flow4 : exact;
+        @for (i) [1,SERVERS,1]
+            meta.server_flow$i : exact;
+        @endfor
     }
     actions{
         set_server_dest_port;
@@ -266,30 +248,14 @@ table update_flow_count_table {
     size: 1;
 }
 
-    table update_min_flow_len1_table2 {
+@for (i) [1,SERVERS,1]
+    table update_min_flow_len$i_table2 {
         actions{
-            update_min_flow_len1;
+            update_min_flow_len$i;
         }
         size: 1;
     }
-    table update_min_flow_len2_table2 {
-        actions{
-            update_min_flow_len2;
-        }
-        size: 1;
-    }
-    table update_min_flow_len3_table2 {
-        actions{
-            update_min_flow_len3;
-        }
-        size: 1;
-    }
-    table update_min_flow_len4_table2 {
-        actions{
-            update_min_flow_len4;
-        }
-        size: 1;
-    }
+@endfor
 
 table send_broadcast_update_table {
     actions{
@@ -302,24 +268,16 @@ table send_broadcast_update_table {
 
 action get_server_flow_count(){
 
-        register_read(meta.server_flow$1,total_flow_count_register,1 - 1);
-        register_read(meta.server_flow$1,total_flow_count_register,2 - 1);
-        register_read(meta.server_flow$1,total_flow_count_register,3 - 1);
-        register_read(meta.server_flow$1,total_flow_count_register,4 - 1);
+    @for (i) [1,SERVERS,1]
+        register_read(meta.server_flow$1,total_flow_count_register,$i - 1);
+    @endfor
 }
 
-action update_min_flow_len1(){
-    modify_field(meta.min_flow_len, meta.server_flow1);
+@for (i) [1,SERVERS,1]
+action update_min_flow_len$i(){
+    modify_field(meta.min_flow_len, meta.server_flow$i);
 }
-action update_min_flow_len2(){
-    modify_field(meta.min_flow_len, meta.server_flow2);
-}
-action update_min_flow_len3(){
-    modify_field(meta.min_flow_len, meta.server_flow3);
-}
-action update_min_flow_len4(){
-    modify_field(meta.min_flow_len, meta.server_flow4);
-}
+@endfor
 
 action send_update(){
     modify_field(load_balancer_head.preamble,2);
