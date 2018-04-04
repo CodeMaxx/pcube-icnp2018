@@ -15,7 +15,9 @@ HOPS = 4
 ShimSize = 4
 TailSize = 4
 INTSize = 8
+METADATA_FIELDS_CAPTURED = 3
 MetadataSize = 12
+TOTAL_SIZE_FOR_EACH_FIELD = 16;  # = no of switches * collected field size from each switch
 total_packets_recvd = 0
 experiment_starts = datetime.now()
 
@@ -58,17 +60,34 @@ class INTHeader(Packet):
     ]
 
 
-class MetadataHeader(Packet):
-    name = 'Metadata Header'
+class MetadataHeader_switchid(Packet):
+    name = 'Metadata switch id Header'
     fields_desc = [
-        IntField('SwitchID', 0),
-        #ShortField('IngressPort', 0),
-        #ShortField('EgressPort', 0), # ShortField means 16 bytes
-        IntField('Hop_Latency', 0),
-        ByteField('qid', 0),
-        BitField('qdepth', 0, 24)
+        IntField('SwitchID1', 0),
+        IntField('SwitchID2', 0),
+        IntField('SwitchID3', 0),
+        IntField('SwitchID4', 0)
     ]
-
+class MetadataHeader_hoplatency(Packet):
+    name = 'Metadata hop latency Header'
+    fields_desc = [
+        IntField('Hop_Latency1', 0),
+        IntField('Hop_Latency2', 0),
+        IntField('Hop_Latency3', 0),
+        IntField('Hop_Latency4', 0)
+    ]
+class MetadataHeader_qdepth(Packet):
+    name = 'Metadata qdepth Header'
+    fields_desc = [
+        ByteField('qid1', 0),
+        BitField('qdepth1', 0, 24),
+        ByteField('qid2', 0),
+        BitField('qdepth2', 0, 24),
+        ByteField('qid3', 0),
+        BitField('qdepth3', 0, 24),
+        ByteField('qid4', 0),
+        BitField('qdepth4', 0, 24)
+    ]
 
 
 def get_if():
@@ -128,25 +147,82 @@ def handle_pkt(pkt):
 
     p1_bytes = bytes(p1)
 
-    #ShimHeader(p1_bytes[0:ShimSize]).show()
+    ShimHeader(p1_bytes[0:ShimSize]).show()
     p1_bytes = p1_bytes[ShimSize:]
 
-    #INTHeader(p1_bytes[0:INTSize]).show()
+    INTHeader(p1_bytes[0:INTSize]).show()
     p1_bytes = p1_bytes[INTSize:]
 
-    for i in range(HOPS):
-        p2 = MetadataHeader(p1_bytes[0:MetadataSize])
+    for i in range(METADATA_FIELDS_CAPTURED):
+        if i == 0:
+            p2 = MetadataHeader_switchid(p1_bytes[0:TOTAL_SIZE_FOR_EACH_FIELD])
+        if i == 1:
+            p2 = MetadataHeader_hoplatency(p1_bytes[0:TOTAL_SIZE_FOR_EACH_FIELD])
+        if i ==2:
+            p2 = MetadataHeader_qdepth(p1_bytes[0:TOTAL_SIZE_FOR_EACH_FIELD])
+
         #p2.show()
         rfile.write(str(time_to_write))
         rfile.write(" ")
-
         rfile.write(str(pkt[IP].src))
         rfile.write(" ")
         rfile.write(str(pkt[IP].dst))
         rfile.write(" ")
-        #print "SwitchID = ", p2.SwitchID
-        rfile.write(str(p2.SwitchID))
-        rfile.write(" ")
+        if i == 0 :
+            print "SwitchID1 = ", p2.SwitchID1
+            rfile.write(str(p2.SwitchID1))
+            rfile.write(" ")
+            print "SwitchID2 = ", p2.SwitchID2
+            rfile.write(str(p2.SwitchID2))
+            rfile.write(" ")
+            print "SwitchID3 = ", p2.SwitchID3
+            rfile.write(str(p2.SwitchID3))
+            rfile.write(" ")
+            print "SwitchID4 = ", p2.SwitchID4
+            rfile.write(str(p2.SwitchID4))
+            rfile.write(" ")
+        if i == 1 :
+            print "hop_latency1 = ", p2.Hop_Latency1
+            rfile.write(str(p2.Hop_Latency1))
+            rfile.write(" ")
+            print "hop_latency2 = ", p2.Hop_Latency2
+            rfile.write(str(p2.Hop_Latency2))
+            rfile.write(" ")
+            print "hop_latency3 = ", p2.Hop_Latency3
+            rfile.write(str(p2.Hop_Latency3))
+            rfile.write(" ")
+            print "hop_latency4 = ", p2.Hop_Latency4
+            rfile.write(str(p2.Hop_Latency4))
+            rfile.write(" ")
+        if i == 2 :
+            print "qid1 = ", p2.qid1
+            rfile.write(str(p2.qid1))
+            rfile.write(" ")
+            print "qdepth1 = ", p2.qdepth1
+            rfile.write(str(p2.qdepth1))
+            rfile.write(" ")
+            print "qid2 = ", p2.qid2
+            rfile.write(str(p2.qid2))
+            rfile.write(" ")
+            print "qdepth2 = ", p2.qdepth2
+            rfile.write(str(p2.qdepth2))
+            rfile.write(" ")
+            print "qid3 = ", p2.qid3
+            rfile.write(str(p2.qid3))
+            rfile.write(" ")
+            print "qdepth3 = ", p2.qdepth3
+            rfile.write(str(p2.qdepth3))
+            rfile.write(" ")
+            print "qid4 = ", p2.qid4
+            rfile.write(str(p2.qid4))
+            rfile.write(" ")
+            print "qdepth4 = ", p2.qdepth4
+            rfile.write(str(p2.qdepth4))
+            rfile.write(" ")
+        rfile.write("\n")
+        p1_bytes = p1_bytes[TOTAL_SIZE_FOR_EACH_FIELD:]
+
+
         #print "IngressPort = ", p2.IngressPort
         #rfile.write(str(p2.IngressPort))
         #rfile.write(" ")
@@ -154,21 +230,21 @@ def handle_pkt(pkt):
         #rfile.write(str(p2.EgressPort))
         #rfile.write(" ")
         #print "hop_latency = ", p2.Hop_Latency
-        rfile.write(str(p2.Hop_Latency))
-        rfile.write(" ")
+        #rfile.write(str(p2.Hop_Latency))
+        #rfile.write(" ")
         #print "qid = ", p2.qid
-        rfile.write(str(p2.qid))
-        rfile.write(" ")
+        #rfile.write(str(p2.qid))
+        #rfile.write(" ")
         #print "qdepth = ", p2.qdepth
-        rfile.write(str(p2.qdepth))
-        rfile.write("\n")
+        #rfile.write(str(p2.qdepth))
+        #rfile.write("\n")
 
-        p1_bytes = p1_bytes[MetadataSize:]
+
     print("total_packets_recvd = ",total_packets_recvd)
 
-    #TailHeader(p1_bytes).show()
+    TailHeader(p1_bytes).show()
 
-#    hexdump(pkt)
+    hexdump(pkt)
     sys.stdout.flush()
     rfile.close()
 
@@ -180,7 +256,7 @@ def main():
     print("sniffing on %s" % iface)
     sys.stdout.flush()
     #print ("before sniff")
-    sniff(filter="udp and ip", iface = iface,
+    sniff(filter="udp and host 10.0.1.1", iface = iface,
           prn = lambda x: handle_pkt(x))
     #print("total_packets_recvd = ",total_packets_recvd)
 if __name__ == '__main__':
