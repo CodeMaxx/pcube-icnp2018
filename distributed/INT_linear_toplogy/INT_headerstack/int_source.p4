@@ -84,7 +84,8 @@ inout standard_metadata_t standard_metadata)
     table ipv4_lpm {
         key = {
             hdr.ipv4.dstAddr: lpm;
-            //hdr.tcp.dstPort : exact;
+            hdr.tcp.srcPort : exact;
+            hdr.tcp.dstPort : exact;
         }
         actions = {
             ipv4_forward;

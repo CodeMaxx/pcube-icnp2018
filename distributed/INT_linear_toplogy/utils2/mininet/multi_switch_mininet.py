@@ -143,13 +143,14 @@ def main():
     net = Mininet(topo = topo,
                   link = TCLink,
                   host = P4Host,
-                  switch = switchClass)
+                  switch = switchClass,
+                  controller = None)
     no_of_switches.no_of_switches = len(net.switches)
     net.start()
 
     sleep(1)
-    c1=RemoteController('c1',ip='127.0.0.1',port=6634)
-    net.addController(c1)
+    #c1=RemoteController('c1',ip='127.0.0.1',port=6634)
+    #net.addController(c1)
     controller = None
     if args.auto_control_plane or 'controller_module' in conf:
         controller = AppController(manifest=manifest, target=args.target,

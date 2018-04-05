@@ -38,7 +38,7 @@ control process_int_sink (inout headers hdr,inout metadata meta,inout standard_m
     action int_sink() {
         // restore length fields of IPv4 header and UDP header
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - (bit<16>)((hdr.intl4_shim.len - (bit<8>)hdr.int_header.ins_cnt) << 2);
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - 12; // since we are not collecting data of int sink it is also a fix for TCP ack problem 
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - 12; // since we are not collecting data of int sink it is also a fix for TCP ack problem
         hdr.udp.len = hdr.udp.len - (bit<16>)((hdr.intl4_shim.len - (bit<8>)hdr.int_header.ins_cnt) << 2);
         // remove all the INT information from the packet
         hdr.int_header.setInvalid();
@@ -76,6 +76,8 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
     table ipv4_lpm {
         key = {
             hdr.ipv4.dstAddr: lpm;
+            hdr.tcp.srcPort : exact;
+            hdr.tcp.dstPort : exact;
         }
         actions = {
             ipv4_forward;
@@ -87,7 +89,7 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
     }
     apply{
      //clone packet from ingress to egress
-        if(standard_metadata.ingress_port==3){
+        if(standard_metadata.ingress_port==2){
             clone(CloneType.I2E, CLONE_SESSION_ID);
             // if (hdr.ipv4.isValid()) {
             //         ipv4_lpm.apply();
@@ -108,7 +110,7 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
 control EgressImpl(inout headers hdr, inout metadata meta,inout standard_metadata_t standard_metadata)
 {
     apply{
-        if(standard_metadata.ingress_port==3){
+        if(standard_metadata.ingress_port==2){
             if(standard_metadata.instance_type == 1){
                 process_int_clone.apply(hdr,meta,standard_metadata);
             }

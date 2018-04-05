@@ -115,8 +115,9 @@ class P4Switch(Switch):
         for port, intf in self.intfs.items():
             if not intf.IP():
                 args.extend(['-i', str(port) + "@" + intf.name])
+        #logic to add host os on port 2 of sink switch (s8)
         if self.device_id == no_of_switches.no_of_switches-1:
-            args.extend(['-i', str(2) + "@" + str('eth0')])
+            args.extend(['-i', str(3) + "@" + str('eth0')])
         if self.pcap_dump:
             args.append("--pcap")
             # args.append("--useFiles")
