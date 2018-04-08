@@ -6,7 +6,7 @@ from scapy.all import sendp, send, get_if_list, get_if_hwaddr
 from scapy.all import IntField, LongField
 from scapy.all import Ether, IP, UDP, TCP
 
-import client
+# import client
 import sys
 from random import seed,uniform
 import random

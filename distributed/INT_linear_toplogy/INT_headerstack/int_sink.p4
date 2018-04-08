@@ -40,11 +40,11 @@ control process_int_sink (inout headers hdr,inout metadata meta,inout standard_m
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - (bit<16>)((hdr.intl4_shim.len - (bit<8>)hdr.int_header.ins_cnt) << 2);
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - 12; // since we are not collecting data of int sink it is also a fix for TCP ack problem
         hdr.udp.len = hdr.udp.len - (bit<16>)((hdr.intl4_shim.len - (bit<8>)hdr.int_header.ins_cnt) << 2);
+        hdr.udp.len = hdr.udp.len -12;
         // remove all the INT information from the packet
-        hdr.int_header.setInvalid();
-        hdr.int_data.setInvalid();
         hdr.intl4_shim.setInvalid();
-        hdr.intl4_tail.setInvalid();
+        hdr.int_header.setInvalid();
+        //hdr.int_data.setInvalid();
 
         hdr.int_switch_id.pop_front(REMAINING_HOP_CNT); // pop REMAINING_HOP_CNT stack
         hdr.int_hop_latency.pop_front(REMAINING_HOP_CNT);
@@ -53,6 +53,8 @@ control process_int_sink (inout headers hdr,inout metadata meta,inout standard_m
         //hdr.int_egress_tstamp.pop_front(4);
         //hdr.int_q_congestion.pop_front(4);
         //hdr.int_egress_port_tx_util.pop_front(4);
+        hdr.intl4_tail.setInvalid();
+
     }
 
     apply {
@@ -76,8 +78,10 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
     table ipv4_lpm {
         key = {
             hdr.ipv4.dstAddr: lpm;
-            hdr.tcp.srcPort : exact;
-            hdr.tcp.dstPort : exact;
+             hdr.udp.sport : exact;
+             hdr.udp.dport : exact;
+            // hdr.tcp.srcPort : exact;
+            // hdr.tcp.dstPort : exact;
         }
         actions = {
             ipv4_forward;

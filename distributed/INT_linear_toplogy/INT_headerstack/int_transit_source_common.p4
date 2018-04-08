@@ -112,9 +112,9 @@ control Int_metadata_insert(inout headers hdr, in int_metadata_t int_metadata,in
             int_set_header_0();
         }
         action int_set_header_0003_i11() {
-            int_set_header_3();
-            int_set_header_2();
             int_set_header_0();
+            int_set_header_2();
+            int_set_header_3();
         }
         action int_set_header_0003_i12() {
             int_set_header_1();
@@ -263,6 +263,8 @@ control Int_outer_encap(inout headers hdr, in int_metadata_t int_metadata)
 {
         action int_update_ipv4() {
             hdr.ipv4.totalLen = hdr.ipv4.totalLen + int_metadata.insert_byte_cnt;
+             hdr.udp.len = hdr.udp.len + int_metadata.insert_byte_cnt;
+
         }
         action int_update_shim() {
             hdr.intl4_shim.len = hdr.intl4_shim.len + int_metadata.int_hdr_word_len;

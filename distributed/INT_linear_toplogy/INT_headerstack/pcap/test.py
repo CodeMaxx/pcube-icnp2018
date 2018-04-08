@@ -1,13 +1,13 @@
 from scapy.all import rdpcap, Packet
 from scapy.all import IntField, ShortField, ByteField, BitField
 
-packets = rdpcap('s2-eth2_in.pcap')
+packets = rdpcap('s8-eth2_out.pcap')
 
-HOPS = 2
+HOPS = 4
 ShimSize = 4
 TailSize = 4
 INTSize = 8
-MetadataSize = 16
+MetadataSize = 12
 
 
 class ShimHeader(Packet):
@@ -60,24 +60,25 @@ class MetadataHeader(Packet):
         BitField('Qdepth', 0, 24)
     ]
 
+for i in range(9,15):
+    p1 = packets[i].copy()
+    p1.show()
 
-p1 = packets[0].copy()
+    p1 = p1.payload.payload.payload
 
-p1 = p1.payload.payload.payload
+    p1_bytes = bytes(p1)
 
-p1_bytes = bytes(p1)
+    ShimHeader(p1_bytes[0:ShimSize]).show()
+    p1_bytes = p1_bytes[ShimSize:]
 
-ShimHeader(p1_bytes[0:ShimSize]).show()
-p1_bytes = p1_bytes[ShimSize:]
+    INTHeader(p1_bytes[0:INTSize]).show()
+    p1_bytes = p1_bytes[INTSize:]
 
-INTHeader(p1_bytes[0:INTSize]).show()
-p1_bytes = p1_bytes[INTSize:]
+    # for i in range(HOPS):
+        # p2 = MetadataHeader(p1_bytes[0:MetadataSize])
+    #p2.show()
+    #print(p2.SwitchID)
+    #print(p2.Hop_Latency)
+        # p1_bytes = p1_bytes[MetadataSize:]
 
-for i in range(HOPS):
-    p2 = MetadataHeader(p1_bytes[0:MetadataSize])
-    p2.show()
-    print(p2.SwitchID)
-    print(p2.Hop_Latency)
-    p1_bytes = p1_bytes[MetadataSize:]
-
-TailHeader(p1_bytes).show()
+#TailHeader(p1_bytes).show()

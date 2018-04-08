@@ -128,7 +128,7 @@ def handle_pkt(pkt):
     #print("current directory is : " + dirpath)
     foldername = os.path.basename(dirpath)
     #print("Directory name is : " + foldername)
-    rfile = open(dirpath+"/../INT_udp_results.txt","a")
+    rfile = open(dirpath+"/INT_tcp_flows_results.txt","a")
     #print("got a packet")
     #print("pkt length=")
     #print(len(pkt))
@@ -162,7 +162,7 @@ def handle_pkt(pkt):
         if i ==2:
             p2 = MetadataHeader_qdepth(p1_bytes[0:TOTAL_SIZE_FOR_EACH_FIELD])
 
-        #p2.show()
+        p2.show()
         rfile.write(str(time_to_write))
         rfile.write(" ")
         rfile.write(str(pkt[IP].src))
@@ -183,41 +183,41 @@ def handle_pkt(pkt):
             rfile.write(str(p2.SwitchID4))
             rfile.write(" ")
         if i == 1 :
-            print "hop_latency1 = ", p2.Hop_Latency1
+            #print "hop_latency1 = ", p2.Hop_Latency1
             rfile.write(str(p2.Hop_Latency1))
             rfile.write(" ")
-            print "hop_latency2 = ", p2.Hop_Latency2
+            #print "hop_latency2 = ", p2.Hop_Latency2
             rfile.write(str(p2.Hop_Latency2))
             rfile.write(" ")
-            print "hop_latency3 = ", p2.Hop_Latency3
+            #print "hop_latency3 = ", p2.Hop_Latency3
             rfile.write(str(p2.Hop_Latency3))
             rfile.write(" ")
-            print "hop_latency4 = ", p2.Hop_Latency4
+            #print "hop_latency4 = ", p2.Hop_Latency4
             rfile.write(str(p2.Hop_Latency4))
             rfile.write(" ")
         if i == 2 :
-            print "qid1 = ", p2.qid1
+            #print "qid1 = ", p2.qid1
             rfile.write(str(p2.qid1))
             rfile.write(" ")
-            print "qdepth1 = ", p2.qdepth1
+            #print "qdepth1 = ", p2.qdepth1
             rfile.write(str(p2.qdepth1))
             rfile.write(" ")
-            print "qid2 = ", p2.qid2
+            #print "qid2 = ", p2.qid2
             rfile.write(str(p2.qid2))
             rfile.write(" ")
-            print "qdepth2 = ", p2.qdepth2
+            #print "qdepth2 = ", p2.qdepth2
             rfile.write(str(p2.qdepth2))
             rfile.write(" ")
-            print "qid3 = ", p2.qid3
+            #print "qid3 = ", p2.qid3
             rfile.write(str(p2.qid3))
             rfile.write(" ")
-            print "qdepth3 = ", p2.qdepth3
+            #print "qdepth3 = ", p2.qdepth3
             rfile.write(str(p2.qdepth3))
             rfile.write(" ")
-            print "qid4 = ", p2.qid4
+            #print "qid4 = ", p2.qid4
             rfile.write(str(p2.qid4))
             rfile.write(" ")
-            print "qdepth4 = ", p2.qdepth4
+            #print "qdepth4 = ", p2.qdepth4
             rfile.write(str(p2.qdepth4))
             rfile.write(" ")
         rfile.write("\n")
@@ -243,9 +243,9 @@ def handle_pkt(pkt):
 
     print("total_packets_recvd = ",total_packets_recvd)
 
-    TailHeader(p1_bytes).show()
+    #TailHeader(p1_bytes).show()
 
-    hexdump(pkt)
+    #hexdump(pkt)
     sys.stdout.flush()
     rfile.close()
 

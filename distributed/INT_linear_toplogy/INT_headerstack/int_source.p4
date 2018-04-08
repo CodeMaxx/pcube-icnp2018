@@ -84,8 +84,10 @@ inout standard_metadata_t standard_metadata)
     table ipv4_lpm {
         key = {
             hdr.ipv4.dstAddr: lpm;
-            hdr.tcp.srcPort : exact;
-            hdr.tcp.dstPort : exact;
+            hdr.udp.sport : exact;
+            hdr.udp.dport : exact;
+            // hdr.tcp.srcPort : exact;
+            // hdr.tcp.dstPort : exact;
         }
         actions = {
             ipv4_forward;
@@ -102,8 +104,8 @@ inout standard_metadata_t standard_metadata)
 
         }
         // otherwise route the packet to the next hop based on the destination address
-        if (hdr.ipv4.isValid()) {
-                ipv4_lpm.apply();
+        if (hdr.ipv4.isValid() ){
+            ipv4_lpm.apply();
         }
     }
 }

@@ -180,7 +180,7 @@ def main():
     print("sniffing on %s" % iface)
     sys.stdout.flush()
     #print ("before sniff")
-    sniff(filter="udp and ip", iface = iface,
+    sniff(filter="udp and host 10.0.1.1", iface = iface,
           prn = lambda x: handle_pkt(x))
     #print("total_packets_recvd = ",total_packets_recvd)
 if __name__ == '__main__':
