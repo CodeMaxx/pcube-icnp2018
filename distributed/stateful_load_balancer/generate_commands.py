@@ -20,7 +20,10 @@
 
 import sys
 
-template = open('commands_template.txt', 'r')
+# template = open('commands_template.txt', 'r')
+# template = open('commands_template_proactive.txt', 'r')
+template = open('commands_template_reactive.txt', 'r')
+
 s = template.read() + "\n"
 template.close()
 

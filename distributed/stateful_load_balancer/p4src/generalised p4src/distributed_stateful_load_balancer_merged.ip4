@@ -18,6 +18,7 @@
 #define UPPER_LIMIT 80
 #define LOWER_LIMIT 20
 #define SERVERS 4
+#define SWITCHES 3
 #define THRESHOLD 99
 #define SQTHRESHOLD 10000
 
@@ -53,9 +54,9 @@ header_type meta_t {
             server_flow$i : 32;
         @endfor
 
-        switch_flow1 : 32;
-        switch_flow2 : 32;
-        switch_flow3 : 32;
+        @for (i) [1,SWITCHES,1]
+            switch_flow$i : 32;
+        @endfor
 
         hash: 16;
         routing_port: 32;
@@ -181,26 +182,14 @@ table get_switch_flow_count_table{
     size:1;
 }
 
-table set_switch1_dest_port_table{
-    actions{
-        set_switch1_dest_port;
+@for (i) [1,SWITCHES,1]
+    table set_switch$i_dest_port_table{
+        actions{
+            set_switch$i_dest_port;
+        }
+        size:1;
     }
-    size:1;
-}
-
-table set_switch2_dest_port_table{
-    actions{
-        set_switch2_dest_port;
-    }
-    size:1;
-}
-
-table set_switch3_dest_port_table{
-    actions{
-        set_switch3_dest_port;
-    }
-    size:1;
-}
+@endfor
 
 table update_map_table {
     actions {
@@ -274,9 +263,9 @@ action get_server_flow_count(){
 }
 
 @for (i) [1,SERVERS,1]
-action update_min_flow_len$i(){
-    modify_field(meta.min_flow_len, meta.server_flow$i);
-}
+    action update_min_flow_len$i(){
+        modify_field(meta.min_flow_len, meta.server_flow$i);
+    }
 @endfor
 
 action send_update(){
@@ -301,25 +290,17 @@ action set_probe_bool(){
 }
 
 action get_switch_flow_count(){
-    register_read(meta.switch_flow1,total_flow_count_register,2);
-    register_read(meta.switch_flow2,total_flow_count_register,3);
-    register_read(meta.switch_flow3,total_flow_count_register,4);
+    @for (i) [1,SWITCHES,1]
+        register_read(meta.switch_flow$i,total_flow_count_register,$i + SWITCHES - 1);
+    @endfor
 }
 
-action set_switch1_dest_port(){
-    register_write(total_flow_count_register,2, meta.switch_flow1 + 1);
-    modify_field(standard_metadata.egress_spec,4);
-}
-
-action set_switch2_dest_port(){
-    register_write(total_flow_count_register,3, meta.switch_flow2 + 1);
-    modify_field(standard_metadata.egress_spec,5);
-}
-
-action set_switch3_dest_port(){
-    register_write(total_flow_count_register,4, meta.switch_flow3 + 1);
-    modify_field(standard_metadata.egress_spec,6);
-}
+@for (i) [1,SWITCHES,1]
+    action set_switch$i_dest_port(){
+        register_write(total_flow_count_register,$i + SWITCHES - 1, meta.switch_flow$i + 1);
+        modify_field(standard_metadata.egress_spec,$i + SWITCHES + 1);
+    }
+@endfor
 
 action update_map() {
     modify_field_with_hash_based_offset(meta.hash, 0,

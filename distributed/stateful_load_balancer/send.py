@@ -219,7 +219,7 @@ def experiment_info():
 def main():
 	experiment_info()
 	start_threads()
-	draw_histogram()
+	# draw_histogram()
 
 if __name__ == '__main__':
 	main()

@@ -16,8 +16,8 @@
 // ------------------ Constants --------------------
 
 #define SERVERS 2
-#define THRESHOLD 4
-#define SQTHRESHOLD 25
+#define THRESHOLD 15
+#define SQTHRESHOLD 256
 
 // -------------------- Headers ------------------------
 
@@ -27,6 +27,8 @@ header_type load_balancer_t {
         syn: 32;
         fin: 32;
         fid: 32;
+        subfid : 32;
+        packet_id : 32;
         hash : 32;
         _count : 32;
     }
@@ -329,10 +331,10 @@ action send_update(){
 //------------------------ Control Logic -----------------
 
 control ingress {
-    if (load_balancer_head.preamble == 1){
+    /*if (load_balancer_head.preamble == 1){
         apply(update_switch_flow_count_table);
     }
-    else {
+    else {*/
         //Start of flow
         apply(get_server_flow_count_table);     //['get_server_flow_count_table'] invoked multiple times
         if(load_balancer_head.syn == 1) {
@@ -365,7 +367,7 @@ control ingress {
         if(load_balancer_head.fin == 1) {
             apply(clear_map_table);
             apply(update_flow_count_table);
-            if(meta.routing_port == 2 or meta.routing_port == 3){
+            /*if(meta.routing_port == 2 or meta.routing_port == 3){
                 if(meta.server_flow1 < meta.server_flow2){
                     apply(update_min_flow_len1_table);
                 }
@@ -373,9 +375,9 @@ control ingress {
                     apply(update_min_flow_len2_table);
                 }
                 apply(send_update_table);
-            }
+            }*/
         }
-    }
+    //}
 }
 
 control egress {

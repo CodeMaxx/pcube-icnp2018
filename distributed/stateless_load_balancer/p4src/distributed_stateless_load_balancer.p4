@@ -159,7 +159,7 @@ action set_dest_port() {
 action update_map() {
     // Read the hash value for the fid
     modify_field_with_hash_based_offset(meta.hash, 0,
-                                        flow_register_index, );
+                                        flow_register_index, 65536);
     // Store mapping
     register_write(flow_to_port_map_register, meta.hash, standard_metadata.egress_spec);
 }
@@ -167,7 +167,7 @@ action update_map() {
 action clear_map() {
     // Get hash for the fid
     modify_field_with_hash_based_offset(meta.hash, 0,
-                                        flow_register_index, );
+                                        flow_register_index, 65536);
     // Change mapping to 0
     register_write(flow_to_port_map_register, meta.hash, 0);
 }
@@ -175,7 +175,7 @@ action clear_map() {
 // Read the port from the mapping register and set egress port accordingly
 action forward() {
     modify_field_with_hash_based_offset(meta.hash, 0,
-                                        flow_register_index, );
+                                        flow_register_index, 65536);
     register_read(meta.routing_port, flow_to_port_map_register, meta.hash);
     modify_field(standard_metadata.egress_spec, meta.routing_port);
 }

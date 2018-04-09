@@ -17,8 +17,8 @@
 
 #define LIMIT 8
 #define SERVERS 2
-#define THRESHOLD 4
-#define SQTHRESHOLD 25
+#define THRESHOLD 15
+#define SQTHRESHOLD 256
 
 // -------------------- Headers ------------------------
 
@@ -28,6 +28,8 @@ header_type load_balancer_t {
         syn: 32;
         fin: 32;
         fid: 32;
+        subfid : 32;
+        packet_id : 32;
         hash : 32;
         _count : 32;
     }
@@ -357,7 +359,7 @@ action send_probe(){
 
 control ingress {
     apply(get_server_flow_count_table);  
-    if (load_balancer_head.preamble == 1){
+    /*if (load_balancer_head.preamble == 1){
         //send update
         if(meta.server_flow1 < meta.server_flow2){
             apply(update_min_flow_len1_table);
@@ -371,7 +373,7 @@ control ingress {
         //get update
         apply(update_switch_flow_count_table);
     }
-    else {
+    else {*/
         //Start of flow
         if(load_balancer_head.syn == 1) {
 
@@ -380,9 +382,9 @@ control ingress {
                 apply(set_server_dest_port_table);
 
                 //Take decision to send probe packet or not
-                if ((meta.server_flow1 + meta.server_flow2)*10 > (LIMIT * 2 * THRESHOLD)){
+                /*if ((meta.server_flow1 + meta.server_flow2)*10 > (LIMIT * 2 * THRESHOLD)){
                     apply(set_probe_bool_table);
-                }
+                }*/
             }
             else{
                 //Choose from switches
@@ -408,16 +410,16 @@ control ingress {
         //Forwarding
         apply(forwarding_table);
 
-        if(meta.probe_bool == 1){
+        /*if(meta.probe_bool == 1){
             apply(send_probe_table);
-        }
+        }*/
 
         //End of flow
         if(load_balancer_head.fin == 1) {
             apply(clear_map_table);
             apply(update_flow_count_table);
         }
-    }
+    //}
 }
 
 control egress {

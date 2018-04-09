@@ -18,8 +18,8 @@
 #define UPPER_LIMIT 80
 #define LOWER_LIMIT 20
 #define SERVERS 2
-#define THRESHOLD 99
-#define SQTHRESHOLD 10000
+#define THRESHOLD 15
+#define SQTHRESHOLD 256
 
 // -------------------- Headers ------------------------
 
@@ -77,6 +77,7 @@ metadata intrinsic_metadata_t intrinsic_metadata;
 
 field_list flow_list {
     load_balancer_head.fid;
+    //subfid
 }
 
 field_list_calculation flow_register_index {
@@ -226,7 +227,8 @@ table drop_table {
     actions {
         _drop;
     }
-    size: 1;}
+    size: 1;
+}
 
 table send_probe_table {
     actions{
@@ -385,7 +387,7 @@ control ingress {
     apply(get_server_flow_count_table); 
 
     //Preamble 1 => Probe packet 
-    if (load_balancer_head.preamble == 1){
+    /*if (load_balancer_head.preamble == 1){
         //Find server with less number of flows
         if(meta.server_flow1 < meta.server_flow2){
             apply(update_min_flow_len1_table1);
@@ -402,7 +404,7 @@ control ingress {
         apply(update_switch_flow_count_table);
     }
     //Default Preamble is 0
-    else {
+    else {*/
 
         //-------------------------------------------------------------------------
         //Start of flow
@@ -414,16 +416,16 @@ control ingress {
                 apply(set_server_dest_port_table);
 
                 //Take decision to send probe packet or not (Reactive)
-                if ((meta.server_flow1 + meta.server_flow2)*100 > (UPPER_LIMIT * SERVERS * THRESHOLD)){
+                /*if ((meta.server_flow1 + meta.server_flow2)*100 > (UPPER_LIMIT * SERVERS * THRESHOLD)){
                     apply(set_probe_bool_table);
-                }
+                }*/
             }
             //Forwarding to another switch
             else{
                 //Choose from switches
                 apply(get_switch_flow_count_table);
                 if (meta.switch_flow1 >= 2*THRESHOLD and meta.switch_flow2 >= 2*THRESHOLD and meta.switch_flow3 >= 2*THRESHOLD){
-                    apply(drop_table);
+                    
                 }
                 else if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3){
                     apply(set_switch1_dest_port_table);
@@ -445,7 +447,7 @@ control ingress {
         apply(forwarding_table);
 
         if (meta.routing_port == 0){
-            
+            apply(drop_table);
         }
 
         if(meta.probe_bool == 1){
@@ -461,7 +463,7 @@ control ingress {
             apply(update_flow_count_table);
 
             //Take decision to send probe packet or not (Proactive)
-            if ((meta.server_flow1 + meta.server_flow2)*100 < (LOWER_LIMIT * SERVERS * THRESHOLD)){
+            /*if ((meta.server_flow1 + meta.server_flow2)*100 < (LOWER_LIMIT * SERVERS * THRESHOLD)){
                 if(meta.routing_port == 2 or meta.routing_port == 3){
                     //Find server with less number of flows
                     if(meta.server_flow1 < meta.server_flow2){
@@ -473,10 +475,10 @@ control ingress {
                     //Send broadcast (set preamble as 2)
                     apply(send_broadcast_update_table);
                 }
-            }
+            }*/
         }
         //-------------------------------------------------------------------------
-    }
+    //}
 }
 
 control egress {
