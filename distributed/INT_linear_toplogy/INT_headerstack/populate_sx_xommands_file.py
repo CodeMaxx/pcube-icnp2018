@@ -1,5 +1,5 @@
 
-# num_elephant_flows = 59
+# num_elephant_flows = 61
 num_elephant_flows = 451
 # populate in s1-s6 files the following entries
 # table_add ipv4_lpm ipv4_forward 10.0.1.1/32 8080 7070 => 00:00:00:00:01:01 1
@@ -12,7 +12,7 @@ for i in range(1,9):
 	print ("file_to_open = ", file_to_open)
 	f1 = open(file_to_open,'a')
 
-	# for SOURCE_PORT in range(7011,7011+num_elephant_flows):
+	# for SOURCE_PORT in range(7000,7000+num_elephant_flows):
 	for SOURCE_PORT in range(50000,50000+num_elephant_flows):
 
 	# for SOURCE_PORT in range(56000):

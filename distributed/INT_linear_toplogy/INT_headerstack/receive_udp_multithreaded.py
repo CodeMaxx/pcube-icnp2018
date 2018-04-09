@@ -10,7 +10,8 @@ from scapy.all import Packet, IPOption
 from scapy.all import ShortField, IntField, LongField, BitField, FieldListField, FieldLenField, ByteField
 from scapy.all import Ether, IP, UDP, TCP, Raw
 from scapy.layers.inet import _IPOption_HDR
-
+from collections import deque
+import commands
 HOPS = 4
 ShimSize = 4
 TailSize = 4
@@ -20,6 +21,10 @@ MetadataSize = 12
 TOTAL_SIZE_FOR_EACH_FIELD = 16;  # = no of switches * collected field size from each switch
 total_packets_recvd = 0
 experiment_starts = datetime.now()
+next_port = 3
+q = deque()
+last_modified = 0
+
 if len(sys.argv) < 2:
     print "./receive_tcp_multithreaded.py <host ip>"
     exit(0)
@@ -122,6 +127,7 @@ class IPOption_MRI(IPOption):
 def handle_pkt(pkt):
     #open file for writing results
     global experiment_starts
+    global last_modified
     global total_packets_recvd
     if total_packets_recvd == 0:
         experiment_starts = datetime.now()
@@ -141,6 +147,13 @@ def handle_pkt(pkt):
     #print "IP dst =" ,
     #print pkt[IP].dst
     total_packets_recvd = total_packets_recvd + 1;
+    global q
+
+    q.append(int(pkt[UDP].sport))
+    if len(q) > 20 :
+        q.popleft()
+
+
 
     time_now = datetime.now()
     time_to_write = (time_now - experiment_starts).total_seconds()
@@ -155,6 +168,16 @@ def handle_pkt(pkt):
 
         # INTHeader(p1_bytes[0:INTSize]).show()
         p1_bytes = p1_bytes[INTSize:]
+        rfile.write(str(time_to_write))
+        rfile.write(" ")
+        rfile.write(str(pkt[IP].src))
+        rfile.write(" ")
+        rfile.write(str(pkt[IP].dst))
+        rfile.write(" ")
+        rfile.write(str(pkt[UDP].sport))
+        rfile.write(" ")
+        rfile.write(str(pkt[UDP].dport))
+        rfile.write(" ")
 
         for i in range(METADATA_FIELDS_CAPTURED):
             if i == 0:
@@ -165,67 +188,78 @@ def handle_pkt(pkt):
                 p2 = MetadataHeader_qdepth(p1_bytes[0:TOTAL_SIZE_FOR_EACH_FIELD])
 
             #p2.show()
-            rfile.write(str(time_to_write))
-            rfile.write(" ")
-            rfile.write(str(pkt[IP].src))
-            rfile.write(" ")
-            rfile.write(str(pkt[IP].dst))
-            rfile.write(" ")
+            
             if i == 0 :
-                print "SwitchID1 = ", p2.SwitchID1
+                # print "SwitchID1 = ", p2.SwitchID1
                 rfile.write(str(p2.SwitchID1))
                 rfile.write(" ")
-                print "SwitchID2 = ", p2.SwitchID2
+                # print "SwitchID2 = ", p2.SwitchID2
                 rfile.write(str(p2.SwitchID2))
                 rfile.write(" ")
-                print "SwitchID3 = ", p2.SwitchID3
+                # print "SwitchID3 = ", p2.SwitchID3
                 rfile.write(str(p2.SwitchID3))
                 rfile.write(" ")
-                print "SwitchID4 = ", p2.SwitchID4
+                # print "SwitchID4 = ", p2.SwitchID4
                 rfile.write(str(p2.SwitchID4))
                 rfile.write(" ")
             if i == 1 :
-                print "hop_latency1 = ", p2.Hop_Latency1
+                # print "hop_latency1 = ", p2.Hop_Latency1
                 rfile.write(str(p2.Hop_Latency1))
                 rfile.write(" ")
-                print "hop_latency2 = ", p2.Hop_Latency2
+                # print "hop_latency2 = ", p2.Hop_Latency2
                 rfile.write(str(p2.Hop_Latency2))
                 rfile.write(" ")
-                print "hop_latency3 = ", p2.Hop_Latency3
+                # print "hop_latency3 = ", p2.Hop_Latency3
                 rfile.write(str(p2.Hop_Latency3))
                 rfile.write(" ")
-                print "hop_latency4 = ", p2.Hop_Latency4
+                # print "hop_latency4 = ", p2.Hop_Latency4
                 rfile.write(str(p2.Hop_Latency4))
                 rfile.write(" ")
             if i == 2 :
-                print "qid1 = ", p2.qid1
-                rfile.write(str(p2.qid1))
-                rfile.write(" ")
-                print "qdepth1 = ", p2.qdepth1
+                # print "qid1 = ", p2.qid1
+                # rfile.write(str(p2.qid1))
+                # rfile.write(" ")
+                # print "qdepth1 = ", p2.qdepth1
                 rfile.write(str(p2.qdepth1))
                 rfile.write(" ")
-                print "qid2 = ", p2.qid2
-                rfile.write(str(p2.qid2))
-                rfile.write(" ")
-                print "qdepth2 = ", p2.qdepth2
+                # print "qid2 = ", p2.qid2
+                # rfile.write(str(p2.qid2))
+                # rfile.write(" ")
+                # print "qdepth2 = ", p2.qdepth2
                 rfile.write(str(p2.qdepth2))
                 rfile.write(" ")
-                print "qid3 = ", p2.qid3
-                rfile.write(str(p2.qid3))
-                rfile.write(" ")
-                print "qdepth3 = ", p2.qdepth3
+                if int(p2.qdepth2) > 200:
+                    for i in q:
+                        if i in range(7000,7060):
+                            if i != last_modified :
+                                if i > last_modified :
+                                    # print("last_modified = ",last_modified)
+                                    # print("current i = ",i)
+                                    # print ("elephant_flow_is = ",i)
+                                    entry_num = 2*(i-7000)+1
+                                    last_modified = i
+                                    print("entry num = ", entry_num)
+                                    next_port = 3
+                                    command_to_run = "echo table_modify ipv4_lpm ipv4_forward "+str(entry_num)+" 00:00:00:00:08:02 "+str(next_port)+" | simple_switch_CLI --thrift-port 9091"
+                                    y = commands.getstatusoutput(command_to_run)
+                                    print("status output = ",y) 
+                # print "qid3 = ", p2.qid3
+                # rfile.write(str(p2.qid3))
+                # rfile.write(" ")
+                # print "qdepth3 = ", p2.qdepth3
                 rfile.write(str(p2.qdepth3))
                 rfile.write(" ")
-                print "qid4 = ", p2.qid4
-                rfile.write(str(p2.qid4))
-                rfile.write(" ")
-                print "qdepth4 = ", p2.qdepth4
+                # print "qid4 = ", p2.qid4
+                # rfile.write(str(p2.qid4))
+                # rfile.write(" ")
+                # print "qdepth4 = ", p2.qdepth4
                 rfile.write(str(p2.qdepth4))
                 rfile.write(" ")
-            rfile.write("\n")
             p1_bytes = p1_bytes[TOTAL_SIZE_FOR_EACH_FIELD:]
-
-        print("total_packets_recvd = ",total_packets_recvd)
+            
+        rfile.write("\n")
+        if time_to_write > 420 :
+            print("total_packets_recvd = ",total_packets_recvd)
 
         # TailHeader(p1_bytes).show()
 
@@ -233,9 +267,8 @@ def handle_pkt(pkt):
         sys.stdout.flush()
         rfile.close()
     else :
-         print("total_packets_recvd = ",total_packets_recvd)
-
-
+        pass
+         # print("total_packets_recvd = ",total_packets_recvd)
 
 def main():
     #total_packets_recvd=0;
