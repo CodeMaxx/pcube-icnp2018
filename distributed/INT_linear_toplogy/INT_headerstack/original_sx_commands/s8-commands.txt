@@ -3,8 +3,8 @@ table_set_default int_prep int_transit 5
 table_set_default int_inst_0003 int_set_header_0003_i0
 table_set_default int_inst_0407 int_set_header_0407_i0
 table_set_default tb_generate_report set_mon_params NoAction
-set_queue_rate 60
-set_queue_depth 250
+set_queue_rate 250
+set_queue_depth 500
 
 mirroring_add 500 3
 table_add tb_generate_report set_mon_params 1 => 08:00:27:e8:bf:1b
@@ -42,7 +42,3 @@ table_add int_inst_0407 int_set_header_0407_i12 12 =>
 table_add int_inst_0407 int_set_header_0407_i13 13 =>
 table_add int_inst_0407 int_set_header_0407_i14 14 =>
 table_add int_inst_0407 int_set_header_0407_i15 15 =>
-
-table_add ipv4_lpm ipv4_forward 10.0.1.1/32 8080 7070 => 00:00:00:00:01:01 2
-table_add ipv4_lpm ipv4_forward 10.0.8.2/32 7070 8080 => 00:00:00:00:08:02 1
-

@@ -31,6 +31,7 @@ def send_data(total_exp_time,no_of_bytes_to_send,SOURCE_PORT):
 	lambd = 1.0/mean
 	while (datetime.now() - experiment_starts).total_seconds() < total_exp_time:
 		x = client.sendto(rand_string,(UDP_SERVER, UDP_PORT))
+		total_packets_sent +=1;
 		# print ("client sent ", x ,"bytes")
 		#print(".",)
 		# in_data =  client.recv(2048)
@@ -48,9 +49,9 @@ def send_data(total_exp_time,no_of_bytes_to_send,SOURCE_PORT):
 
 	out_data = "bye"
 	# print ("sending bye now ", datetime.now())
-	total_packets_sent +=1;
 	# client.sendall(bytes(out_data,'UTF-8'))
 	client.sendto(bytes(out_data,'UTF-8'),(UDP_SERVER, UDP_PORT))
+	total_packets_sent +=1;
 	  #if out_data=='bye':
 	  #	break
 	client.close()
