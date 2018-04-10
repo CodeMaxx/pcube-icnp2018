@@ -9,7 +9,8 @@ keywords = {
 	'compare'	:	'@compare',
 	'endcompare':	'@endcompare',
 	'case'	:	'@case',
-	'endcase':	'@endcase'
+	'endcase':	'@endcase',
+	'sum'	:	'@sum'
 }
 
 constants = {}
@@ -39,7 +40,10 @@ def ip4_to_p4(src,dest):
 						tokens = row.split()
 						iter_var = re.search(r'\((.*)\)',tokens[1]).group(1)
 						res = re.search(r'\[(.*),(.*),(.*)\]',tokens[2].rstrip('\n'))
-						start,end,step = int(res.group(1)),constants[res.group(2)],int(res.group(3))
+						try:
+							start, end, step = int(res.group(1)), int(res.group(2)), int(res.group(3))
+						except:
+							start, end, step = int(res.group(1)), constants[res.group(2)], int(res.group(3))
 
 					elif keywords['endfor'] in row:
 						# print(content)
@@ -69,19 +73,19 @@ def roll_out_compare(varlist, op, dfile):
 		condition[i] = cond
 
 		if i == var_keys[0]:
-			final += '%sif(%s) {\n%s\n%s}\n' % (spaces, cond, varlist[i], spaces)
+			final += '%sif(%s) {\n%s\n%s}\n' % (spaces, cond, varlist[i].rstrip('\n'), spaces)
 		else:
-			final += '%selse if(%s) {\n%s\n%s}\n' % (spaces, cond, varlist[i], spaces)
+			final += '%selse if(%s) {\n%s\n%s}\n' % (spaces, cond, varlist[i].rstrip('\n'), spaces)
 	
 	dfile.write(final)
 
 def expand_compare(src, dest):
 	sfile = open(src, 'r')
 	dfile = open(dest, 'w')
-	compare_format = Keyword('@compare') + '(' + Word(nums)("num") + \
+	compare_format = Keyword(keywords['compare']) + '(' + Word(nums)("num") + \
             ')' + '(' + Regex(r'[^\s\(\)]*')('op') + ')' 
 	case_var_format = Word(alphas+"_", alphanums+"_"+".")('var')
-	case_format = Keyword('@case') + case_var_format + ":"
+	case_format = Keyword(keywords['case']) + case_var_format + ":"
 
 	for line in sfile:
 		if keywords['compare'] in line:
@@ -142,12 +146,12 @@ def expand_sum(src, dest):
 	sfile = open(src, 'r')
 	dfile = open(dest, 'w')
 
-	sum_format = Keyword('@sum') + '(' + Word(nums)("start") + "," + Word(nums)("end") + ')' \
+	sum_format = Keyword(keywords['sum']) + '(' + Word(nums)("start") + "," + Word(nums)("end") + ')' \
 					+ '(' + Regex(r'[^\s\(\)]*')("var") + ')'
 	line_sum_format = Regex(r'[^\@]*')("before") + sum_format + Regex(r'[^\@]*')("after")
 	
 	for line in sfile:
-		if '@sum' in line:
+		if keywords['sum'] in line:
 			# import pdb; pdb.set_trace()
 			res = line_sum_format.parseString(line)
 			start = int(res.start)

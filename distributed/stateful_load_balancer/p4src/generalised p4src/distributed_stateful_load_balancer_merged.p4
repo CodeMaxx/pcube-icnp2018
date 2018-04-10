@@ -468,21 +468,21 @@ control ingress {
                 //     apply(set_switch3_dest_port_table);
                 // }
 
-                    if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3) {
-                        apply(set_switch1_dest_port_table);
-                        apply(set_switch1_dest_port_table);
-
-                    }
-                    else if(meta.switch_flow2 <= meta.switch_flow1 and meta.switch_flow2 <= meta.switch_flow3) {
-                        apply(set_switch2_dest_port_table);
-                        apply(set_switch2_dest_port_table);
-
-                    }
-                    else if(meta.switch_flow3 <= meta.switch_flow1 and meta.switch_flow3 <= meta.switch_flow2 and ) {
-                        apply(set_switch3_dest_port_table);
-                        apply(set_switch3_dest_port_table);
-
-                    }
+                if (meta.switch_flow1 >= 2*THRESHOLD and meta.switch_flow2 >= 2*THRESHOLD and meta.switch_flow3 >= 2*THRESHOLD){
+                    apply(drop_table);
+                }
+                else {
+                        if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3) {
+                            apply(set_switch1_dest_port_table);
+                        }
+                        else if(meta.switch_flow2 <= meta.switch_flow1 and meta.switch_flow2 <= meta.switch_flow3) {
+                            apply(set_switch2_dest_port_table);
+                        }
+                        else if(meta.switch_flow3 <= meta.switch_flow1 and meta.switch_flow3 <= meta.switch_flow2 and ) {
+                            apply(set_switch3_dest_port_table);
+                        }
+                }
+                
             }
 
             //Remember mapping for the flow

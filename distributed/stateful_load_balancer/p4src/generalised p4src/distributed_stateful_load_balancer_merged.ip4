@@ -410,20 +410,19 @@ control ingress {
                 //     apply(set_switch3_dest_port_table);
                 // }
 
-                @compare (3) (<=)
-                    @case meta.switch_flow1:
-                        apply(set_switch1_dest_port_table);
-                        apply(set_switch1_dest_port_table);
-                    @endcase
-                    @case meta.switch_flow2:
-                        apply(set_switch2_dest_port_table);
-                        apply(set_switch2_dest_port_table);
-                    @endcase
-                    @case meta.switch_flow3:
-                        apply(set_switch3_dest_port_table);
-                        apply(set_switch3_dest_port_table);
-                    @endcase
-                @endcompare
+                if (meta.switch_flow1 >= 2*THRESHOLD and meta.switch_flow2 >= 2*THRESHOLD and meta.switch_flow3 >= 2*THRESHOLD){
+                    apply(drop_table);
+                }
+                else {
+                    @compare (3) (<=)
+                    @for (i) [1,4,1]
+                        @case meta.switch_flow$i:
+                            apply(set_switch$i_dest_port_table);
+                        @endcase
+                    @endfor
+                    @endcompare
+                }
+                
             }
 
             //Remember mapping for the flow
