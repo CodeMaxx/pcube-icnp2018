@@ -301,10 +301,10 @@ table send_broadcast_update_table {
 
 action get_server_flow_count(){
 
-        register_read(meta.server_flow$1,total_flow_count_register,1 - 1);
-        register_read(meta.server_flow$1,total_flow_count_register,2 - 1);
-        register_read(meta.server_flow$1,total_flow_count_register,3 - 1);
-        register_read(meta.server_flow$1,total_flow_count_register,4 - 1);
+        register_read(meta.server_flow1,total_flow_count_register,1 - 1);
+        register_read(meta.server_flow2,total_flow_count_register,2 - 1);
+        register_read(meta.server_flow3,total_flow_count_register,3 - 1);
+        register_read(meta.server_flow4,total_flow_count_register,4 - 1);
 }
 
     action update_min_flow_len1(){
@@ -399,7 +399,7 @@ action update_flow_count() {
 }
 
 action send_broadcast_update(){
-    modify_field(load_balancer_head._count, (@sum (1, 10)(meta.server_flow$i))*10);
+modify_field(load_balancer_head._count, (meta.server_flow1 + meta.server_flow2)*10);
     modify_field(load_balancer_head.hash, LOWER_LIMIT * SERVERS * THRESHOLD);
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
     modify_field(load_balancer_head.preamble,2);

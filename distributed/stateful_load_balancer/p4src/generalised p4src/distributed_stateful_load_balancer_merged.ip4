@@ -258,7 +258,7 @@ table send_broadcast_update_table {
 action get_server_flow_count(){
 
     @for (i) [1,SERVERS,1]
-        register_read(meta.server_flow$1,total_flow_count_register,$i - 1);
+        register_read(meta.server_flow$i,total_flow_count_register,$i - 1);
     @endfor
 }
 
@@ -341,7 +341,7 @@ action update_flow_count() {
 }
 
 action send_broadcast_update(){
-    modify_field(load_balancer_head._count, (@sum (1, 10)(meta.server_flow$i))*10);
+    modify_field(load_balancer_head._count, (@sum (1, 3)(meta.server_flow$i))*10);
     modify_field(load_balancer_head.hash, LOWER_LIMIT * SERVERS * THRESHOLD);
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
     modify_field(load_balancer_head.preamble,2);

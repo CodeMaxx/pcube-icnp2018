@@ -129,12 +129,12 @@ def generate_basic_commands(src):
             + Optional(reads_format) + actions_format + \
             Optional(reads_format) + Regex(r'[^\}\{]*') + close_brac
 	sfile_str = sfile.read()
-	sfile.close()
 	res = table_format.searchString(sfile_str)
 	
 	for table in res:
 		dfile.write('table_set_default %s %s\n' % (table.table_name, table.default_action))
 	
+	sfile.close()
 	dfile.close()
 
 
@@ -142,21 +142,28 @@ def expand_sum(src, dest):
 	sfile = open(src, 'r')
 	dfile = open(dest, 'w')
 
-	#############
-	for line in sfile:
-		dfile.write(line)
-	return
-	#####
 	sum_format = Keyword('@sum') + '(' + Word(nums)("start") + "," + Word(nums)("end") + ')' \
 					+ '(' + Regex(r'[^\s\(\)]*')("var") + ')'
+	line_sum_format = Regex(r'[^\@]*')("before") + sum_format + Regex(r'[^\@]*')("after")
 	
 	for line in sfile:
 		if '@sum' in line:
-			res = sum_format.searchString(line)
+			# import pdb; pdb.set_trace()
+			res = line_sum_format.parseString(line)
 			start = int(res.start)
 			end = int(res.end)
 			var = res.var
-			replacement = "$i"
+
+			replacement = res.before
+			for i in range(start, end):
+				replacement += var.replace("$i", str(i)) + " + "
+			replacement = replacement[:-3] + res.after
+			dfile.write(replacement)
+		else:
+			dfile.write(line)
+	
+	sfile.close()
+	dfile.close()
 
 
 if __name__ == '__main__':
@@ -174,8 +181,8 @@ if __name__ == '__main__':
 	tempfiles.append(destcmp)
 
 	ip4_to_p4(src, destfor)
-	expand_compare(destfor, dest)
-	# expand_sum(destcmp, dest)
+	expand_compare(destfor, destcmp)
+	expand_sum(destcmp, dest)
 	generate_basic_commands(dest)
 
 	for f in tempfiles:
