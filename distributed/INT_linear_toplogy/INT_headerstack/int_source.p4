@@ -47,16 +47,35 @@ control process_int_source_headers (inout headers hdr,inout metadata meta,inout 
 
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 16; // 16 bytes of INT headers are added to packet INT shim header(4B) + INT tail header(4B) + Int Metadat header(8B)  Rest INT stack will be added by the INT transit hops
         hdr.udp.len = hdr.udp.len + 16;
+
     }
-    action int_source_dscp(bit<5> ins_cnt, bit<4> ins_mask0003,bit<4> ins_mask0407) {
+
+    action set_hash(bit<16> ecmp_base, bit<32> ecmp_count) {
+        hash(hdr.int_header.rsvd3,
+	    HashAlgorithm.crc16,
+	    ecmp_base,
+	    { hdr.ipv4.srcAddr,
+	      hdr.ipv4.dstAddr,
+          hdr.ipv4.protocol,
+          // hdr.tcp.srcPort,
+          // hdr.tcp.dstPort },
+          hdr.udp.sport,
+          hdr.udp.dport },
+	           ecmp_count);
+    }
+
+    action int_source_dscp(bit<5> ins_cnt, bit<4> ins_mask0003,bit<4> ins_mask0407,bit<16> ecmp_base, bit<32> ecmp_count) {
         int_source(ins_cnt, ins_mask0003,ins_mask0407);
+        set_hash(ecmp_base,ecmp_count);
         hdr.ipv4.dscp = INT_DSCP;
     }
+
 
     table tb_int_source {
         key = { }
         actions = {
             int_source_dscp;
+            set_hash;
         }
         size = 1024;
     }
