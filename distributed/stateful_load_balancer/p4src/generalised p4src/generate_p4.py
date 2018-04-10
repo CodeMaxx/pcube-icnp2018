@@ -1,7 +1,7 @@
 import sys
 import os
 import re
-from pyparsing import Word, alphas, nums, nestedExpr, Keyword, alphanums, Regex
+from pyparsing import Word, alphas, nums, nestedExpr, Keyword, alphanums, Regex, White, Optional
 
 keywords = {
 	'for'	:	'@for',
@@ -117,10 +117,25 @@ def expand_compare(src, dest):
 	dfile.close()
 
 
-def generate_basic_commands(src, dest):
+def generate_basic_commands(src):
 	sfile = open(src, 'r')
-	dfile = open(dest, 'w')
-
+	dfile = open('basic_commands.txt', 'w')
+	open_brac = Optional(White()) + "{" + Optional(White())
+	close_brac = Optional(White()) + "}" + Optional(White())
+	actions_format = Keyword('actions') + open_brac + Word(alphas + "_", alphanums+"_")('default_action') \
+            + ";" + Regex(r'[^\}\{]*') + close_brac
+	reads_format = Keyword('reads') + open_brac + Regex(r'[^\}\{]*') + close_brac
+	table_format = Keyword('table') + Word(alphas+"_", alphanums+"_")('table_name') + open_brac \
+            + Optional(reads_format) + actions_format + \
+            Optional(reads_format) + Regex(r'[^\}\{]*') + close_brac
+	sfile_str = sfile.read()
+	sfile.close()
+	res = table_format.searchString(sfile_str)
+	
+	for table in res:
+		dfile.write('table_set_default %s %s\n' % (table.table_name, table.default_action))
+	
+	dfile.close()
 
 
 
@@ -132,11 +147,15 @@ if __name__ == '__main__':
 	tempfiles = []
 	filename = src[:-4]
 	destfor = "%s.forp4" % filename
-	tempfiles.append(destfor)
 	destcmp = "%s.cmpp4" % filename
-	# tempfiles.append(destcmp)
 	dest = "%s.p4" % filename
+
+	tempfiles.append(destfor)
+	tempfiles.append(destcmp)
+
 	ip4_to_p4(src, destfor)
 	expand_compare(destfor, dest)
+	generate_basic_commands(dest)
+
 	for f in tempfiles:
 		os.system('rm -f %s' % f)
