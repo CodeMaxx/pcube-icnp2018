@@ -472,14 +472,14 @@ control ingress {
                     apply(drop_table);
                 }
                 else {
-                        if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3) {
-                            apply(set_switch1_dest_port_table);
-                        }
-                        else if(meta.switch_flow2 <= meta.switch_flow1 and meta.switch_flow2 <= meta.switch_flow3) {
+                        if(meta.switch_flow2 <= meta.switch_flow3 and meta.switch_flow2 <= meta.switch_flow1) {
                             apply(set_switch2_dest_port_table);
                         }
-                        else if(meta.switch_flow3 <= meta.switch_flow1 and meta.switch_flow3 <= meta.switch_flow2 and ) {
+                        else if(meta.switch_flow3 <= meta.switch_flow2 and meta.switch_flow3 <= meta.switch_flow1) {
                             apply(set_switch3_dest_port_table);
+                        }
+                        else if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3 and ) {
+                            apply(set_switch1_dest_port_table);
                         }
                 }
                 
