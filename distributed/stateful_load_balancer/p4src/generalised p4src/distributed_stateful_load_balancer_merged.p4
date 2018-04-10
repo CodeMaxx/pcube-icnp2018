@@ -18,6 +18,7 @@
 #define UPPER_LIMIT 80
 #define LOWER_LIMIT 20
 #define SERVERS 4
+#define SWITCHES 3
 #define THRESHOLD 99
 #define SQTHRESHOLD 10000
 
@@ -54,9 +55,9 @@ header_type meta_t {
             server_flow3 : 32;
             server_flow4 : 32;
 
-        switch_flow1 : 32;
-        switch_flow2 : 32;
-        switch_flow3 : 32;
+            switch_flow1 : 32;
+            switch_flow2 : 32;
+            switch_flow3 : 32;
 
         hash: 16;
         routing_port: 32;
@@ -199,26 +200,24 @@ table get_switch_flow_count_table{
     size:1;
 }
 
-table set_switch1_dest_port_table{
-    actions{
-        set_switch1_dest_port;
+    table set_switch1_dest_port_table{
+        actions{
+            set_switch1_dest_port;
+        }
+        size:1;
     }
-    size:1;
-}
-
-table set_switch2_dest_port_table{
-    actions{
-        set_switch2_dest_port;
+    table set_switch2_dest_port_table{
+        actions{
+            set_switch2_dest_port;
+        }
+        size:1;
     }
-    size:1;
-}
-
-table set_switch3_dest_port_table{
-    actions{
-        set_switch3_dest_port;
+    table set_switch3_dest_port_table{
+        actions{
+            set_switch3_dest_port;
+        }
+        size:1;
     }
-    size:1;
-}
 
 table update_map_table {
     actions {
@@ -308,18 +307,18 @@ action get_server_flow_count(){
         register_read(meta.server_flow$1,total_flow_count_register,4 - 1);
 }
 
-action update_min_flow_len1(){
-    modify_field(meta.min_flow_len, meta.server_flow1);
-}
-action update_min_flow_len2(){
-    modify_field(meta.min_flow_len, meta.server_flow2);
-}
-action update_min_flow_len3(){
-    modify_field(meta.min_flow_len, meta.server_flow3);
-}
-action update_min_flow_len4(){
-    modify_field(meta.min_flow_len, meta.server_flow4);
-}
+    action update_min_flow_len1(){
+        modify_field(meta.min_flow_len, meta.server_flow1);
+    }
+    action update_min_flow_len2(){
+        modify_field(meta.min_flow_len, meta.server_flow2);
+    }
+    action update_min_flow_len3(){
+        modify_field(meta.min_flow_len, meta.server_flow3);
+    }
+    action update_min_flow_len4(){
+        modify_field(meta.min_flow_len, meta.server_flow4);
+    }
 
 action send_update(){
     modify_field(load_balancer_head.preamble,2);
@@ -343,25 +342,23 @@ action set_probe_bool(){
 }
 
 action get_switch_flow_count(){
-    register_read(meta.switch_flow1,total_flow_count_register,2);
-    register_read(meta.switch_flow2,total_flow_count_register,3);
-    register_read(meta.switch_flow3,total_flow_count_register,4);
+        register_read(meta.switch_flow1,total_flow_count_register,1 + SWITCHES - 1);
+        register_read(meta.switch_flow2,total_flow_count_register,2 + SWITCHES - 1);
+        register_read(meta.switch_flow3,total_flow_count_register,3 + SWITCHES - 1);
 }
 
-action set_switch1_dest_port(){
-    register_write(total_flow_count_register,2, meta.switch_flow1 + 1);
-    modify_field(standard_metadata.egress_spec,4);
-}
-
-action set_switch2_dest_port(){
-    register_write(total_flow_count_register,3, meta.switch_flow2 + 1);
-    modify_field(standard_metadata.egress_spec,5);
-}
-
-action set_switch3_dest_port(){
-    register_write(total_flow_count_register,4, meta.switch_flow3 + 1);
-    modify_field(standard_metadata.egress_spec,6);
-}
+    action set_switch1_dest_port(){
+        register_write(total_flow_count_register,1 + SWITCHES - 1, meta.switch_flow1 + 1);
+        modify_field(standard_metadata.egress_spec,1 + SWITCHES + 1);
+    }
+    action set_switch2_dest_port(){
+        register_write(total_flow_count_register,2 + SWITCHES - 1, meta.switch_flow2 + 1);
+        modify_field(standard_metadata.egress_spec,2 + SWITCHES + 1);
+    }
+    action set_switch3_dest_port(){
+        register_write(total_flow_count_register,3 + SWITCHES - 1, meta.switch_flow3 + 1);
+        modify_field(standard_metadata.egress_spec,3 + SWITCHES + 1);
+    }
 
 action update_map() {
     modify_field_with_hash_based_offset(meta.hash, 0,
@@ -458,18 +455,34 @@ control ingress {
             else{
                 //Choose from switches
                 apply(get_switch_flow_count_table);
-                if (meta.switch_flow1 >= 2*THRESHOLD and meta.switch_flow2 >= 2*THRESHOLD and meta.switch_flow3 >= 2*THRESHOLD){
-                    apply(drop_table);
-                }
-                else if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3){
-                    apply(set_switch1_dest_port_table);
-                }
-                else if(meta.switch_flow2 <= meta.switch_flow1 and meta.switch_flow2 <= meta.switch_flow3){
-                    apply(set_switch2_dest_port_table);
-                }
-                else if(meta.switch_flow3 <= meta.switch_flow1 and meta.switch_flow3 <= meta.switch_flow2){
-                    apply(set_switch3_dest_port_table);
-                }
+                // if (meta.switch_flow1 >= 2*THRESHOLD and meta.switch_flow2 >= 2*THRESHOLD and meta.switch_flow3 >= 2*THRESHOLD){
+                //     apply(drop_table);
+                // }
+                // else if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3){
+                //     apply(set_switch1_dest_port_table);
+                // }
+                // else if(meta.switch_flow2 <= meta.switch_flow1 and meta.switch_flow2 <= meta.switch_flow3){
+                //     apply(set_switch2_dest_port_table);
+                // }
+                // else if(meta.switch_flow3 <= meta.switch_flow1 and meta.switch_flow3 <= meta.switch_flow2){
+                //     apply(set_switch3_dest_port_table);
+                // }
+
+                    if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3) {
+                        apply(set_switch1_dest_port_table);
+                        apply(set_switch1_dest_port_table);
+
+                    }
+                    else if(meta.switch_flow2 <= meta.switch_flow1 and meta.switch_flow2 <= meta.switch_flow3) {
+                        apply(set_switch2_dest_port_table);
+                        apply(set_switch2_dest_port_table);
+
+                    }
+                    else if(meta.switch_flow3 <= meta.switch_flow1 and meta.switch_flow3 <= meta.switch_flow2 and ) {
+                        apply(set_switch3_dest_port_table);
+                        apply(set_switch3_dest_port_table);
+
+                    }
             }
 
             //Remember mapping for the flow
