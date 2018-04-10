@@ -399,7 +399,7 @@ action update_flow_count() {
 }
 
 action send_broadcast_update(){
-    modify_field(load_balancer_head._count, (meta.server_flow1 + meta.server_flow2)*10);
+    modify_field(load_balancer_head._count, (@sum (1, 10)(meta.server_flow$i))*10);
     modify_field(load_balancer_head.hash, LOWER_LIMIT * SERVERS * THRESHOLD);
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
     modify_field(load_balancer_head.preamble,2);
@@ -468,20 +468,21 @@ control ingress {
                 //     apply(set_switch3_dest_port_table);
                 // }
 
-                @re (3) (<=)
-                    @case meta.switch_flow1:
+                    if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3) {
                         apply(set_switch1_dest_port_table);
                         apply(set_switch1_dest_port_table);
-                    @endcase
-                    @case meta.switch_flow2:
+
+                    }
+                    else if(meta.switch_flow2 <= meta.switch_flow1 and meta.switch_flow2 <= meta.switch_flow3) {
                         apply(set_switch2_dest_port_table);
                         apply(set_switch2_dest_port_table);
-                    @endcase
-                    @case meta.switch_flow3:
+
+                    }
+                    else if(meta.switch_flow3 <= meta.switch_flow1 and meta.switch_flow3 <= meta.switch_flow2 and ) {
                         apply(set_switch3_dest_port_table);
                         apply(set_switch3_dest_port_table);
-                    @endcase
-                @re
+
+                    }
             }
 
             //Remember mapping for the flow
