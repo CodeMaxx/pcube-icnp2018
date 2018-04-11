@@ -4,6 +4,7 @@ from datetime import datetime
 #elephant flows
 total_packets_sent_thread1 = 0
 total_packets_sent_thread2 = 0
+total_exp_time = 450
 
 num_threads = 2;
 class UDPFlow(threading.Thread):
@@ -18,15 +19,14 @@ class UDPFlow(threading.Thread):
 		threadID = self.threadID
 		if threadID == 0 :
 			# num_elephant_flows = 60
-			num_elephant_flows = 45
 			no_of_bytes_to_send = 1370
-			total_exp_time = 450
-			elecphant_flow_time = 10
+			elephant_flow_time = 10
+			num_elephant_flows = int(total_exp_time/elephant_flow_time)
 			total_packets_sent_elephant = 0
 			for SOURCE_PORT in range(7011,7011+num_elephant_flows):
 				# print ("Sending elephant_flow using Source_port : ",SOURCE_PORT)
 				# total_packets_sent_elephant += client.send_data(elecphant_flow_time,no_of_bytes_to_send,SOURCE_PORT)
-				total_packets_sent_thread1 += client.send_data(elecphant_flow_time,no_of_bytes_to_send,SOURCE_PORT)
+				total_packets_sent_thread1 += client.send_data(elephant_flow_time,no_of_bytes_to_send,SOURCE_PORT)
 			print("total_packets_sent_thread1 = ",total_packets_sent_thread1)
 			# print ("total_packets_sent_elephant = ",total_packets_sent_elephant)
 		# if threadID in range(1,11):
