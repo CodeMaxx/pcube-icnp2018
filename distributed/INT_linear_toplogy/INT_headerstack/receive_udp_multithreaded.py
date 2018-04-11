@@ -23,6 +23,7 @@ total_packets_recvd = 0
 experiment_starts = datetime.now()
 next_port = 3
 q = deque()
+time_elapsed = 1 # initial sliding window frame = 1 second
 last_modified = 0
 
 if len(sys.argv) < 2:
@@ -129,6 +130,7 @@ def handle_pkt(pkt):
     global experiment_starts
     global last_modified
     global total_packets_recvd
+    global time_elapsed
     if total_packets_recvd == 0:
         experiment_starts = datetime.now()
 
@@ -153,9 +155,20 @@ def handle_pkt(pkt):
     if len(q) > 20 :
         q.popleft()
 
-
-
     time_now = datetime.now()
+    print("time_elapsed = ",time_elapsed)
+    if ((time_now - experiment_starts).total_seconds() < time_elapsed) :
+        # add elements to the array
+        print ("inside if")
+    else :
+        # write logic for finding max occuring element from list
+        update_flag = 1 # triger to modify field if the threshold on the bottleneck switch crosses
+        print("inside else")
+        time_elapsed += 1 # increment the sliding window by 1 second
+        
+        
+
+    
     time_to_write = (time_now - experiment_starts).total_seconds()
     p1 = pkt.copy()
 
@@ -166,18 +179,24 @@ def handle_pkt(pkt):
         # ShimHeader(p1_bytes[0:ShimSize]).show()
         p1_bytes = p1_bytes[ShimSize:]
 
+        x = INTHeader(p1_bytes[0:INTSize])
+        # print(" int.rsvd3 =",x.rsvd3)
         # INTHeader(p1_bytes[0:INTSize]).show()
         p1_bytes = p1_bytes[INTSize:]
         rfile.write(str(time_to_write))
-        rfile.write(" ")
+        rfile.write(",")
         rfile.write(str(pkt[IP].src))
-        rfile.write(" ")
+        rfile.write(",")
         rfile.write(str(pkt[IP].dst))
-        rfile.write(" ")
+        rfile.write(",")
         rfile.write(str(pkt[UDP].sport))
-        rfile.write(" ")
+        rfile.write(",")
         rfile.write(str(pkt[UDP].dport))
-        rfile.write(" ")
+        rfile.write(",")
+        rfile.write(str(x.rsvd3))
+        rfile.write(",")
+        rfile.write(str(pkt[IP].len))
+        rfile.write(",")
 
         for i in range(METADATA_FIELDS_CAPTURED):
             if i == 0:
@@ -192,43 +211,45 @@ def handle_pkt(pkt):
             if i == 0 :
                 # print "SwitchID1 = ", p2.SwitchID1
                 rfile.write(str(p2.SwitchID1))
-                rfile.write(" ")
+                rfile.write(",")
                 # print "SwitchID2 = ", p2.SwitchID2
                 rfile.write(str(p2.SwitchID2))
-                rfile.write(" ")
+                rfile.write(",")
                 # print "SwitchID3 = ", p2.SwitchID3
                 rfile.write(str(p2.SwitchID3))
-                rfile.write(" ")
+                rfile.write(",")
                 # print "SwitchID4 = ", p2.SwitchID4
                 rfile.write(str(p2.SwitchID4))
-                rfile.write(" ")
+                rfile.write(",")
             if i == 1 :
                 # print "hop_latency1 = ", p2.Hop_Latency1
                 rfile.write(str(p2.Hop_Latency1))
-                rfile.write(" ")
+                rfile.write(",")
                 # print "hop_latency2 = ", p2.Hop_Latency2
                 rfile.write(str(p2.Hop_Latency2))
-                rfile.write(" ")
+                rfile.write(",")
                 # print "hop_latency3 = ", p2.Hop_Latency3
                 rfile.write(str(p2.Hop_Latency3))
-                rfile.write(" ")
+                rfile.write(",")
                 # print "hop_latency4 = ", p2.Hop_Latency4
                 rfile.write(str(p2.Hop_Latency4))
-                rfile.write(" ")
+                rfile.write(",")
             if i == 2 :
                 # print "qid1 = ", p2.qid1
                 # rfile.write(str(p2.qid1))
                 # rfile.write(" ")
                 # print "qdepth1 = ", p2.qdepth1
                 rfile.write(str(p2.qdepth1))
-                rfile.write(" ")
+                rfile.write(",")
                 # print "qid2 = ", p2.qid2
                 # rfile.write(str(p2.qid2))
                 # rfile.write(" ")
                 # print "qdepth2 = ", p2.qdepth2
                 rfile.write(str(p2.qdepth2))
-                rfile.write(" ")
-                if int(p2.qdepth2) > 200:
+                rfile.write(",")
+                if int(p2.qdepth2) > 200 && update_flag == 1:
+                    update_flag = 0
+
                     for i in q:
                         if i in range(7000,7060):
                             if i != last_modified :
@@ -248,17 +269,17 @@ def handle_pkt(pkt):
                 # rfile.write(" ")
                 # print "qdepth3 = ", p2.qdepth3
                 rfile.write(str(p2.qdepth3))
-                rfile.write(" ")
+                rfile.write(",")
                 # print "qid4 = ", p2.qid4
                 # rfile.write(str(p2.qid4))
                 # rfile.write(" ")
                 # print "qdepth4 = ", p2.qdepth4
                 rfile.write(str(p2.qdepth4))
-                rfile.write(" ")
+                # rfile.write(" ")
             p1_bytes = p1_bytes[TOTAL_SIZE_FOR_EACH_FIELD:]
-            
+
         rfile.write("\n")
-        if time_to_write > 420 :
+        if time_to_write > 450 :
             print("total_packets_recvd = ",total_packets_recvd)
 
         # TailHeader(p1_bytes).show()
