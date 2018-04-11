@@ -1,6 +1,7 @@
 import sys
 import os
 import re
+from collections import OrderedDict
 from pyparsing import Word, alphas, nums, nestedExpr, Keyword, alphanums, Regex, White, Optional
 
 keywords = {
@@ -18,7 +19,7 @@ constants = {}
 def roll_out_forloop(content,iter_var,dfile,start,end,step):
 	replacement = '$%s' % iter_var
 
-	for i in range(start,end+1,step):
+	for i in range(start,end,step):
 		dfile.write(content.replace(replacement,str(i)))
 
 def ip4_to_p4(src,dest):
@@ -68,7 +69,7 @@ def roll_out_compare(varlist, op, dfile):
 		for j in var_keys:
 			if j != i:
 				cond += "%s %s %s" % (i, op, j)
-				if j != var_keys[-1]:
+				if (i != var_keys[-1] and j != var_keys[-1]) or (i == var_keys[-1] and j != var_keys[-2]):
 					cond += ' and '
 		condition[i] = cond
 
@@ -92,7 +93,7 @@ def expand_compare(src, dest):
 			res = compare_format.parseString(line)
 			num = int(res.num)
 			op = res.op
-			varlist = {}
+			varlist = OrderedDict()
 			while num:
 				l = sfile.readline()
 				# import pdb; pdb.set_trace()
