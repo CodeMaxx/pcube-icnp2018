@@ -263,7 +263,7 @@ control Int_outer_encap(inout headers hdr, in int_metadata_t int_metadata)
 {
         action int_update_ipv4() {
             hdr.ipv4.totalLen = hdr.ipv4.totalLen + int_metadata.insert_byte_cnt;
-             hdr.udp.len = hdr.udp.len + int_metadata.insert_byte_cnt;
+            hdr.udp.len = hdr.udp.len + int_metadata.insert_byte_cnt;
 
         }
         action int_update_shim() {

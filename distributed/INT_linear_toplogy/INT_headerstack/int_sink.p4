@@ -77,7 +77,8 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
     }
     table ipv4_lpm {
         key = {
-            hdr.ipv4.dstAddr: lpm;
+             hdr.ipv4.srcAddr : exact;
+             hdr.ipv4.dstAddr: lpm;
              hdr.udp.sport : exact;
              hdr.udp.dport : exact;
             // hdr.tcp.srcPort : exact;
@@ -93,7 +94,7 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
     }
     apply{
      //clone packet from ingress to egress
-        if(standard_metadata.ingress_port==2){
+        if(standard_metadata.ingress_port==3){
             clone(CloneType.I2E, CLONE_SESSION_ID);
             // if (hdr.ipv4.isValid()) {
             //         ipv4_lpm.apply();
@@ -114,7 +115,7 @@ control IngressImpl(inout headers hdr, inout metadata meta,inout standard_metada
 control EgressImpl(inout headers hdr, inout metadata meta,inout standard_metadata_t standard_metadata)
 {
     apply{
-        if(standard_metadata.ingress_port==2){
+        if(standard_metadata.ingress_port==3){
             if(standard_metadata.instance_type == 1){
                 process_int_clone.apply(hdr,meta,standard_metadata);
             }

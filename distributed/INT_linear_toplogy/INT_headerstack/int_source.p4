@@ -102,6 +102,7 @@ inout standard_metadata_t standard_metadata)
     }
     table ipv4_lpm {
         key = {
+            hdr.ipv4.srcAddr : exact;
             hdr.ipv4.dstAddr: lpm;
             hdr.udp.sport : exact;
             hdr.udp.dport : exact;
@@ -117,7 +118,7 @@ inout standard_metadata_t standard_metadata)
         default_action = NoAction();
     }
     apply{
-        if(standard_metadata.ingress_port==1){
+        if(standard_metadata.ingress_port==1 || standard_metadata.ingress_port==2){
             // initialize the INT header fields
             process_int_source_headers.apply(hdr, meta, standard_metadata); // sets the INT header fields
 
@@ -132,7 +133,7 @@ control EgressImpl(inout headers hdr, inout metadata meta,
 inout standard_metadata_t standard_metadata)
 {
     apply{
-        if(standard_metadata.ingress_port==1){
+        if(standard_metadata.ingress_port==1 || standard_metadata.ingress_port==2 ){
             Int_transit_egress.apply(hdr, meta, standard_metadata); //sets the INT stack to get metadata from the source switches
         }
     }

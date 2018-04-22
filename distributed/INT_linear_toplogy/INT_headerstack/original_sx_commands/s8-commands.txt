@@ -6,7 +6,7 @@ table_set_default tb_generate_report set_mon_params NoAction
 set_queue_rate 250
 set_queue_depth 500
 
-mirroring_add 500 3
+mirroring_add 500 4
 table_add tb_generate_report set_mon_params 1 => 08:00:27:e8:bf:1b
 
 table_add int_inst_0003 int_set_header_0003_i0 0 =>
