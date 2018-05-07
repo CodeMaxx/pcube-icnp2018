@@ -24,14 +24,14 @@ total_packets_recvd = 0
 experiment_starts = datetime.now()
 next_port = 3
 q = deque()
-time_elapsed = 0.4 # initial sliding window frame = 1 second
+time_elapsed = 0.1 # initial sliding window frame = 1 second
 update_flag = 0
 l = [] #empty list to store (hash,udpsrcport) in list on tuples
 port_identified = 0
 last_port_identified = 0
 packet_len_sum = 0
 AVG_PACKET_LENGTH_THRESHHOLD = 1000
-QDEPTH_THRESHHOLD = 5
+QDEPTH_THRESHHOLD = 50
 next_port_list = []
 
 if len(sys.argv) < 2:
@@ -205,7 +205,7 @@ def handle_pkt(pkt):
         rfile.write(",")
         rfile.write(str(pkt[IP].len))
         rfile.write(",")
-       
+        
         # print("time_elapsed = ",time_elapsed)
         compare = (time_now - experiment_starts).total_seconds()
         # print("compare = ",compare)
@@ -254,14 +254,14 @@ def handle_pkt(pkt):
                     del l[:]
                     packet_len_sum = 0
                     # print("l after reinitialization = ", l)
-            time_elapsed += 0.3 # increment the sliding window by 1 second
+            time_elapsed += 0.1 # increment the sliding window by 1 second
             time_elapsed += (datetime.now()-time_in_elif).total_seconds()
             # print("updated time_elapsed in elif = ",time_elapsed)
 
 
         else : 
             print("timeout")
-            time_elapsed += 1 # increment the sliding window by 1 second
+            time_elapsed += 0.1 # increment the sliding window by 1 second
         
         print_qdepth_flag = 0
         for i in range(METADATA_FIELDS_CAPTURED):
@@ -364,7 +364,7 @@ def handle_pkt(pkt):
             p1_bytes = p1_bytes[TOTAL_SIZE_FOR_EACH_FIELD:]
 
         rfile.write("\n")
-        if time_to_write > 440 :
+        if time_to_write > 180 :
             print("total_packets_recvd = ",total_packets_recvd)
             # pass
 

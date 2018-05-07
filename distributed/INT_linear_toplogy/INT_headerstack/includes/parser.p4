@@ -36,7 +36,6 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta,
         }
         state parse_udp {
                 packet.extract(hdr.udp);
-                //transition parse_intl4_shim;
                 transition select((hdr.ipv4.dscp & INT_DSCP) == INT_DSCP) {
                     true: parse_intl4_shim;
                     default: accept;
@@ -53,7 +52,6 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta,
                 meta.parser_metadata.remaining_q_occupancy = 4- hdr.int_header.remaining_hop_cnt;
                 transition select(hdr.intl4_shim.len - INT_HEADER_LEN_WORD){
                     0 : parse_intl4_tail;
-                    //default : parse_int_data;
                     default : parse_switch_id;
                 }
 
@@ -82,12 +80,6 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta,
                 default :  parse_int_q_occupancy;
             }
         }
-/*
-        state parse_int_data {
-            // Parse INT metadata, not INT header, INT shim header and INT tail header
-            packet.extract(hdr.int_data, (bit<32>) ((hdr.intl4_shim.len - INT_HEADER_LEN_WORD) << 5));
-            transition parse_intl4_tail;
-        }  */
         state parse_intl4_tail {
                 packet.extract(hdr.intl4_tail);
                 transition accept;
@@ -101,7 +93,6 @@ control DeparserImpl(packet_out packet, in headers hdr) {
             packet.emit(hdr.udp);
             packet.emit(hdr.intl4_shim);
             packet.emit(hdr.int_header);
-            //packet.emit(hdr.int_data);
             packet.emit(hdr.int_switch_id);
             packet.emit(hdr.int_port_ids);
             packet.emit(hdr.int_hop_latency);

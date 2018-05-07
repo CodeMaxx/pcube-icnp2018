@@ -32,7 +32,7 @@ def send_data(total_exp_time,no_of_bytes_to_send,SOURCE_PORT,UDP_SERVER):
 	# print ("rand_string = ", rand_string)
 	#client.sendall(bytes("This is from Client",'UTF-8'))
 	total_packets_sent = 0;
-	mean = 0.05
+	mean = 0.02
 	lambd = 1.0/mean
 	while (datetime.now() - experiment_starts).total_seconds() < total_exp_time:
 		x = client.sendto(rand_string,(UDP_SERVER, UDP_PORT))
