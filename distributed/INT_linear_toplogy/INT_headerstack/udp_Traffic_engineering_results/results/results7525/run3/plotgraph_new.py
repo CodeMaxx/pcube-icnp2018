@@ -6,13 +6,21 @@ import matplotlib.pyplot as plt
 import pandas as pd #this is how I usually import pandas
 import sys #only needed to determine Python version number
 import matplotlib #only needed to determine Matplotlib version number
+import numpy as np
 
 df = pd.read_csv('INT_udp_flows_results.txt', sep=",", header=None)
+dx = pd.read_csv('INT_udp_flows_results_original.txt', sep=",", header=None)
 df.columns = ["time", "srcip", "dstip", "srcport","dstport","hash","pktlen","swid4","swid3","swid2","swid1","hoplatency4","hoplatency3","hoplatency2","hoplatency1","qdepth4","qdepth3","qdepth2","qdepth1"]
 time_at_s1 = []
 qdepth_at_s1 = []
 time_at_s3 = []
 qdepth_at_s3 = []
+
+dx.columns = ["time", "srcip", "dstip", "srcport","dstport","hash","pktlen","swid4","swid3","swid2","swid1","hoplatency4","hoplatency3","hoplatency2","hoplatency1","qdepth4","qdepth3","qdepth2","qdepth1"]
+time_at_s3x = []
+qdepth_at_s3x = []
+
+
 time_at_s4 = []
 qdepth_at_s4 = []
 time_at_s5 = []
@@ -89,6 +97,18 @@ print("avg_long_flow_latency=",total_long_flow_latency/long_flow_pkt_count/1000,
 	# print (row['time'],row['qdepth3'])
 # print(type(data))
 # print (qdepth_at_s3)
+for index,row in dx.iterrows():
+	if row['swid3'] == 3 :
+		qdepth_at_s3x.append(row["qdepth3"])
+		time_at_s3x.append(row["time"])
+df3x = pd.DataFrame(
+    {'Time in seconds': time_at_s3x,
+     'Queue depth at S3': qdepth_at_s3x,
+     })
+
+
+
+
 
 df1 = pd.DataFrame(
     {'Time in seconds': time_at_s1,
@@ -103,7 +123,12 @@ df3 = pd.DataFrame(
     {'Time in seconds': time_at_s3,
      'Queue depth at S3': qdepth_at_s3,
      })
-df3.plot(x='Time in seconds',y='Queue depth at S3')
+ax = df3.plot(x='Time in seconds',y='Queue depth at S3')
+constant = np.ones(shape=(451, 1)) * 150
+constantDF = pd.DataFrame(constant, columns=['Constant'])
+constantDF.plot(ax = ax)
+df3x.plot(x='Time in seconds',y='Queue depth at S3', ax = ax)
+#plt.show()
 # df.plot(x="time",y=qdepth_at_s3,kind="bar")
 plt.savefig('qdepth_at_s3.png', bbox_inches='tight')
 

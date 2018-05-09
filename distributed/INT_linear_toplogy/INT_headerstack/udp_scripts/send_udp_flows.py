@@ -12,7 +12,7 @@ total_packets_sent_thread4 = 0
 total_exp_time = 450
 end_t2 = 0
 
-num_threads = 10;
+num_threads = 2;
 if len(sys.argv) < 2:
     print ("./server.py <udp_server_ip>")
     exit(0)
@@ -103,13 +103,13 @@ class UDPFlow(threading.Thread):
 			print("total time in thread4 = ",(datetime.now()-time_thread1).total_seconds())
 		if threadID == 4 :
 			# num_elephant_flows = 60
-			time.sleep(15)
+			time.sleep(10)
 			time_thread1 = datetime.now()
 			no_of_bytes_to_send = 1370
 			elephant_flow_time = 10
 			num_elephant_flows = int(total_exp_time/elephant_flow_time)
 			total_packets_sent_elephant = 0
-			for SOURCE_PORT in range(7000,7045):
+			for SOURCE_PORT in range(7005,7050):
 				print ("Sending elephant_flow using Source_port in thread 4 = : ",SOURCE_PORT)
 				# total_packets_sent_elephant += client.send_data(elecphant_flow_time,no_of_bytes_to_send,SOURCE_PORT)
 				total_packets_sent_thread4 += client.send_data(elephant_flow_time,no_of_bytes_to_send,SOURCE_PORT,UDP_SERVER)
@@ -119,7 +119,7 @@ class UDPFlow(threading.Thread):
 			print("total time in thread5 = ",(datetime.now()-time_thread1).total_seconds())
 		if threadID == 5 :
 			# num_elephant_flows = 60
-			time.sleep(15)
+			time.sleep(20)
 			time_thread1 = datetime.now()
 			no_of_bytes_to_send = 1370
 			elephant_flow_time = 10
@@ -131,8 +131,8 @@ class UDPFlow(threading.Thread):
 				total_packets_sent_thread4 += client.send_data(elephant_flow_time,no_of_bytes_to_send,SOURCE_PORT,UDP_SERVER)
 				if end_t2 == 59:
 					break
-			print("total_packets_sent_thread4 = ",total_packets_sent_thread4)
-			print("total time in thread4 = ",(datetime.now()-time_thread1).total_seconds())
+			print("total_packets_sent_thread6 = ",total_packets_sent_thread4)
+			print("total time in thread6 = ",(datetime.now()-time_thread1).total_seconds())
 		if threadID == 6 :
 			# num_elephant_flows = 60
 			time.sleep(15)
@@ -141,14 +141,14 @@ class UDPFlow(threading.Thread):
 			elephant_flow_time = 10
 			num_elephant_flows = int(total_exp_time/elephant_flow_time)
 			total_packets_sent_elephant = 0
-			for SOURCE_PORT in range(7000,7045):
+			for SOURCE_PORT in range(7005,7045):
 				print ("Sending elephant_flow using Source_port in thread 4 = : ",SOURCE_PORT)
 				# total_packets_sent_elephant += client.send_data(elecphant_flow_time,no_of_bytes_to_send,SOURCE_PORT)
 				total_packets_sent_thread4 += client.send_data(elephant_flow_time,no_of_bytes_to_send,SOURCE_PORT,UDP_SERVER)
 				if end_t2 == 59:
 					break
-			print("total_packets_sent_thread4 = ",total_packets_sent_thread4)
-			print("total time in thread4 = ",(datetime.now()-time_thread1).total_seconds())
+			print("total_packets_sent_thread7 = ",total_packets_sent_thread4)
+			print("total time in thread7 = ",(datetime.now()-time_thread1).total_seconds())
 		if threadID == 7 :
 			# num_elephant_flows = 60
 			time.sleep(15)
@@ -163,8 +163,8 @@ class UDPFlow(threading.Thread):
 				total_packets_sent_thread4 += client.send_data(elephant_flow_time,no_of_bytes_to_send,SOURCE_PORT,UDP_SERVER)
 				if end_t2 == 59:
 					break
-			print("total_packets_sent_thread4 = ",total_packets_sent_thread4)
-			print("total time in thread4 = ",(datetime.now()-time_thread1).total_seconds())
+			print("total_packets_sent_thread8 = ",total_packets_sent_thread4)
+			print("total time in thread8 = ",(datetime.now()-time_thread1).total_seconds())
 		if threadID == 8 :
 			# num_elephant_flows = 60
 			time.sleep(15)
@@ -179,8 +179,8 @@ class UDPFlow(threading.Thread):
 				total_packets_sent_thread4 += client.send_data(elephant_flow_time,no_of_bytes_to_send,SOURCE_PORT,UDP_SERVER)
 				if end_t2 == 59:
 					break
-			print("total_packets_sent_thread4 = ",total_packets_sent_thread4)
-			print("total time in thread4 = ",(datetime.now()-time_thread1).total_seconds())
+			print("total_packets_sent_thread9 = ",total_packets_sent_thread4)
+			print("total time in thread9 = ",(datetime.now()-time_thread1).total_seconds())
 
 def start_threads():
 	threads = []
