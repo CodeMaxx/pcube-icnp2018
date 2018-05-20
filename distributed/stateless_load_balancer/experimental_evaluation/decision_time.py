@@ -15,16 +15,16 @@
 # limitations under the License.
 
 ########################################################
-# 1. Time taken to forward data packets
+# 1. Decision making time for SYN packets
 ########################################################
 
 from utils import *
 
-def avg_data_forwarding_time(pcap_data):
+def avg_syn_decision_time(pcap_data):
     pcaps = pcap_data.pcaps
     avg_time = 0
     total_time = 0
-    num_data_packets = 0
+    num_syn_packets = 0
     bla = 0
     # Go through all users
     for i in range(1, NUM_SWITCHES + 1):
@@ -32,6 +32,7 @@ def avg_data_forwarding_time(pcap_data):
             host_packets = pcaps[(i, 1, "out")]
         except:
             continue
+        all_outgoing_flow_packets = []
         outgoing_dict = {}
         # Go through all non-users on the switch and get packets going from switch to them
         for j in range(2, NUM_PORTS + 1):
@@ -39,45 +40,42 @@ def avg_data_forwarding_time(pcap_data):
                 outgoing_packets = pcaps[(i, j, "in")]
             except:
                 continue
+            # Filter out all the SYN packets and convert them to LoadBalancerPkt
             # Also store the timestamp of the packets
-            # all_outgoing_flow_packets += filter(lambda packet: packet[0]['Raw'].load.startswith(b"Data"), \
-            #     [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
-            # Filter out all the data packets and convert them to LoadBalancerPkt
+            # all_outgoing_flow_packets += filter(lambda packet: packet[0]['Raw'].load.startswith(b"SYN") and 
+            #     packet[0].preamble == 0, [(LoadBalancePkt(bytes(p)), p.time) for p in outgoing_packets])
             for p in outgoing_packets:
                 packet = LoadBalancePkt(bytes(p))
-                if packet['Raw'].load.startswith(b"Data"):
+                if packet['Raw'].load.startswith(b"SYN") and packet.preamble == 0:
                     loadbal_layer = packet['LoadBalancePkt']
-                    outgoing_dict[(loadbal_layer.fid, loadbal_layer.subfid, loadbal_layer.packet_id)] = \
-                        (packet, p.time)
+                    outgoing_dict[(loadbal_layer.fid, loadbal_layer.subfid)] = (packet, p.time)
         # For all the user packets
         for packet in host_packets:
             p = LoadBalancePkt(bytes(packet))
             p_loadbal_layer = p['LoadBalancePkt']
-            # Extract the packet number for this fid
-
-            # If p is not a Data packet
-            if not p['Raw'].load.startswith(b"Data"):
+            # If p is not a SYN packet
+            if not (p['Raw'].load.startswith(b"SYN") and p['LoadBalancePkt'].preamble == 0):
                 continue
-            bla +=1
 
+            bla += 1
+            # Find packet matching the host packet
             try:
-                packet_match = outgoing_dict[(
-                    p_loadbal_layer.fid, p_loadbal_layer.subfid, p_loadbal_layer.packet_id)]
+                packet_match=outgoing_dict[(p_loadbal_layer.fid, p_loadbal_layer.subfid)]
                 total_time += packet_match[1] - packet.time
-                num_data_packets += 1
+                num_syn_packets += 1
             except:
-                # p.show()
-                pass
-    avg_time = total_time/num_data_packets
+                p.show()
 
-    print("Total time taken for forwarding all Data packets: %s milliseconds" % str(total_time*1000))
-    print("Number of Data packets: %s" % num_data_packets)
-    print("Average forwarding time: %s milliseconds" % str(avg_time*1000))
+    avg_time = total_time/num_syn_packets
+
+    print("Total time taken for forwarding all SYN packets: %s milliseconds" % str(total_time*1000))
+    print("Number of SYN packets: %s" % num_syn_packets)
+    print("Average decision making time: %s milliseconds" % str(avg_time*1000))
     print(bla)
 
 def main(pcap_data):
-    cprint("Data Forwarding Time")
-    avg_data_forwarding_time(pcap_data)
+    cprint("Decision Making Time")
+    avg_syn_decision_time(pcap_data)
 
 if __name__ == '__main__':
     pcap_data = PcapData()

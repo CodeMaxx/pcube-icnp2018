@@ -31,11 +31,11 @@ EXPERIMENT_STARTS = datetime.now()
 #Experiment knobs
 NUM_THREADS = 30
 
-TIME_STEP = [10,30,50]
-TIME_STEP_PROB = [0.1,0.1,0.8]
+TIME_STEP = [5,15,25]
+TIME_STEP_PROB = [0.3,0.4,0.3]
 
 FLOW_LENGTH = [30,200,1000]
-FLOW_LENGTH_PROB = [1,0,0]
+FLOW_LENGTH_PROB = [0.5,0.5,0]
 
 THREAD_SLEEP_PROB = [0.99,0.01]
 ###
@@ -219,7 +219,7 @@ def experiment_info():
 def main():
 	experiment_info()
 	start_threads()
-	# draw_histogram()
+	draw_histogram()
 
 if __name__ == '__main__':
 	main()

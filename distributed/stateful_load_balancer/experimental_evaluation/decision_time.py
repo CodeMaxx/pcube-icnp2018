@@ -64,7 +64,8 @@ def avg_syn_decision_time(pcap_data):
                 total_time += packet_match[1] - packet.time
                 num_syn_packets += 1
             except:
-                p.show()
+                # p.show()
+                pass
 
     avg_time = total_time/num_syn_packets
 

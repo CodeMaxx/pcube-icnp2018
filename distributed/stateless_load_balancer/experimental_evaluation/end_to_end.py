@@ -87,8 +87,8 @@ def end_to_end_latency(pcap_data):
                     num_data_packets += 1
             except:
                 # import pdb; pdb.set_trace()
-                # p.show()
-                pass
+                p.show()
+                # pass
 
     avg_time = total_time/num_data_packets
 

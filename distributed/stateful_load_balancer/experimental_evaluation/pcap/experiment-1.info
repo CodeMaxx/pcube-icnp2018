@@ -1,7 +1,7 @@
-Experiment time = 300s
-Number of threads = 40
-Time steps: [10,30,50]
-Time steps probability: [0.100000,0.100000,0.800000]
+Experiment time = 60s
+Number of threads = 30
+Time steps: [5,15,25]
+Time steps probability: [0.000000,0.100000,0.900000]
 Flow length: [30,200,1000]
 Flow length probability: [1.000000,0.000000,0.000000]
 Thread sleep probability: [0.990000,0.010000]

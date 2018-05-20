@@ -73,6 +73,7 @@ metadata intrinsic_metadata_t intrinsic_metadata;
 
 field_list flow_list {
     load_balancer_head.fid;
+    load_balancer_head.subfid;
 }
 
 field_list_calculation flow_register_index {
@@ -331,10 +332,10 @@ action send_update(){
 //------------------------ Control Logic -----------------
 
 control ingress {
-    /*if (load_balancer_head.preamble == 1){
+    if (load_balancer_head.preamble == 1){
         apply(update_switch_flow_count_table);
     }
-    else {*/
+    else {
         //Start of flow
         apply(get_server_flow_count_table);     //['get_server_flow_count_table'] invoked multiple times
         if(load_balancer_head.syn == 1) {
@@ -367,7 +368,7 @@ control ingress {
         if(load_balancer_head.fin == 1) {
             apply(clear_map_table);
             apply(update_flow_count_table);
-            /*if(meta.routing_port == 2 or meta.routing_port == 3){
+            if(meta.routing_port == 2 or meta.routing_port == 3){
                 if(meta.server_flow1 < meta.server_flow2){
                     apply(update_min_flow_len1_table);
                 }
@@ -375,9 +376,9 @@ control ingress {
                     apply(update_min_flow_len2_table);
                 }
                 apply(send_update_table);
-            }*/
+            }
         }
-    //}
+    }
 }
 
 control egress {

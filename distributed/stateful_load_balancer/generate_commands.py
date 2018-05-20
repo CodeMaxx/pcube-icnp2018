@@ -20,20 +20,19 @@
 
 import sys
 
-# template = open('commands_template.txt', 'r')
-# template = open('commands_template_proactive.txt', 'r')
-template = open('commands_template_reactive.txt', 'r')
+
+if len(sys.argv) < 3:
+    print("Format: %s <TYPE> <SERVER_THRESHOLD>" % sys.argv[0])
+    sys.exit()
+
+THRESHOLD = int(sys.argv[2])
+S1PORT = 2
+S2PORT = 3
+
+template = open('commands_template_%s.txt'%sys.argv[1], 'r')
 
 s = template.read() + "\n"
 template.close()
-
-if len(sys.argv) < 2:
-    print("Format: %s <SERVER_THRESHOLD>" % sys.argv[0])
-    sys.exit()
-
-THRESHOLD = int(sys.argv[1])
-S1PORT = 2
-S2PORT = 3
 
 for s1_load in range(THRESHOLD + 1):
     for s2_load in range(THRESHOLD + 1):

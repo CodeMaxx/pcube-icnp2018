@@ -66,8 +66,7 @@ def avg_data_forwarding_time(pcap_data):
                 total_time += packet_match[1] - packet.time
                 num_data_packets += 1
             except:
-                # p.show()
-                pass
+                p.show()
     avg_time = total_time/num_data_packets
 
     print("Total time taken for forwarding all Data packets: %s milliseconds" % str(total_time*1000))
