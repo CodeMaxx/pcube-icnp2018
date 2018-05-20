@@ -36,6 +36,7 @@ CLI_PATH=$BMV2_PATH/tools/modified_runtime_CLI.py
 python toporeader.py
 
 ###--- Generate sync_commands.txt
+# python generate_sync_commands.py
 
 ###--- Compile p4 
 $P4C_BM_SCRIPT p4src/distributed_stateful_load_balancer_$1.p4 --json distributed_stateful_load_balancer_$1.json

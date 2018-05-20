@@ -68,8 +68,9 @@ def main():
 	nb_switches = int(data.pop("nb_switches")) 
 	nb_hosts = int(data.pop("nb_hosts"))
 	links = []
-	for k in data:
-		a, b = str(data[k]["_0"]), str(data[k]["_1"])  
+	for k in data["links"]:
+		k = str(k)
+		a, b = str(data["links"][k]["_0"]), str(data["links"][k]["_1"])  
 		links.append( (a,b) )
 	###
 		
