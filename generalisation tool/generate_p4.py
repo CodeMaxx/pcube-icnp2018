@@ -1,8 +1,32 @@
+#!/usr/bin/env python3
+
+# Copyright 2018-present Akash Trehan Aniket Shirke
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+########################################################
+# 1. Convert ip4 format to p4
+########################################################
+
 import sys
 import os
 import re
 from collections import OrderedDict
+# For recognising the 
 from pyparsing import Word, alphas, nums, nestedExpr, Keyword, alphanums, Regex, White, Optional
+
+# Kept a global for clarity on what all features are present
+# and also prevent hardcoding of tokens in the code
 
 keywords = {
 	'for'	:	'@for',
@@ -14,32 +38,51 @@ keywords = {
 	'sum'	:	'@sum'
 }
 
+# TODO: Wrap code into a class
+
+# Can read in any #define constant and replaces them if present as a parameter for `for` loop
+# For e.g. Number of servers
+# TODO: Do an initial pass for constants so that they can be used in all features not just loops
 constants = {}
 
+# Replaces the ip4 for loop format by sequential p4 code
 def roll_out_forloop(content,iter_var,dfile,start,end,step):
+	# For replacing all occurances of the loop variable in the code.
 	replacement = '$%s' % iter_var
 
 	for i in range(start,end,step):
 		dfile.write(content.replace(replacement,str(i)))
 
-def ip4_to_p4(src,dest):
-
-	active_for = False 
+# Recognises all for loops present in the code along with their parameters
+# Nesting of loops not supported since it's not a common feature required in P4 programming
+# TODO: Can use pyparsing code just like in all other functions
+def expand_for(src,dest):
+	# Recognises if we are in a for loop
+	active_for = False
+	# The iteration variable
 	iter_var = None
+	# range(start, end, step)
 	start,end,step = None,None,None
+	# Content of the loop
 	content = ""
 
 	with open(dest,'w') as dfile:
 		with open(src,'r') as sfile:
+			# Loop through ip4 source
 			for row in sfile:
+				# Collect constants
 				if '#define' in row:
 					tokens = row.split()
 					constants[tokens[1]] = int(tokens[2])
+				# If we are entering a for loop or already in one
 				if active_for or keywords['for'] in row:
+					# If starting a for loop
 					if keywords['for'] in row:
 						active_for = True
 						tokens = row.split()
+						# Get the lexeme used as iteration variable
 						iter_var = re.search(r'\((.*)\)',tokens[1]).group(1)
+						# 
 						res = re.search(r'\[(.*),(.*),(.*)\]',tokens[2].rstrip('\n'))
 						try:
 							start, end, step = int(res.group(1)), int(res.group(2)), int(res.group(3))
@@ -185,7 +228,7 @@ if __name__ == '__main__':
 	tempfiles.append(destfor)
 	tempfiles.append(destcmp)
 
-	ip4_to_p4(src, destfor)
+	expand_for(src, destfor)
 	expand_compare(destfor, destcmp)
 	expand_sum(destcmp, dest)
 	generate_basic_commands(dest)
