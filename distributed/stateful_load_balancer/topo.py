@@ -65,15 +65,15 @@ def main():
 	### Read from Json dump
 	with open('topo.json','r') as f:
 		data = json.load(f)
-	nb_switches = int(data.pop("nb_switches")) 
+	nb_switches = int(data.pop("nb_switches"))
 	nb_hosts = int(data.pop("nb_hosts"))
 	links = []
 	for k in data["links"]:
 		k = str(k)
-		a, b = str(data["links"][k]["_0"]), str(data["links"][k]["_1"])  
+		a, b = str(data["links"][k]["_0"]), str(data["links"][k]["_1"])
 		links.append( (a,b) )
 	###
-		
+
 	topo = MyTopo(args.behavioral_exe,
 				  args.json,
 				  nb_hosts, nb_switches, links)
@@ -102,7 +102,7 @@ def main():
 	for i in xrange(nb_switches):
 		cmd = [args.cli, "--json", args.json,
 			   "--thrift-port", str(_THRIFT_BASE_PORT + i)]
-		
+
 		with open("commands.txt", "r") as f:
 			print " ".join(cmd)
 			try:

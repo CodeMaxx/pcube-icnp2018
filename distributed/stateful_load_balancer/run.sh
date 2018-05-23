@@ -33,7 +33,7 @@ CLI_PATH=$BMV2_PATH/tools/modified_runtime_CLI.py
 
 
 ###--- Read topo, create json dump of topology
-python toporeader.py
+python topo_to_json.py
 
 ###--- Generate sync_commands.txt
 # python generate_sync_commands.py

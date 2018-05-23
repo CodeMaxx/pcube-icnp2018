@@ -25,7 +25,7 @@ def read_topo():
         connection = OrderedDict()
         connection["_0"], connection["_1"] = links[i][0], links[i][1]
         json_data["links"]["_%d"%i] = connection
-    
+
     return json_data
 
 data = read_topo()
