@@ -29,8 +29,8 @@ while True:
         # print( " bye received from client")  
         # break
         #print ("from client", msg)
-        if (datetime.now()-experiment_start_time).total_seconds() > 450 :
-            print ("total_packets_received in this flow = ",total_packets_received)
+        if (datetime.now()-experiment_start_time).total_seconds() > 440 :
+            print ("total_packets_received till now = ",total_packets_received)
 
     # y = server.sendto(bytes(msg,'UTF-8'),address)
     # print("y =",y)

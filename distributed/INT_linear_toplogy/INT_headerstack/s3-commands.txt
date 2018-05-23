@@ -2,8 +2,8 @@ table_set_default ipv4_lpm drop
 table_set_default int_prep int_transit 3
 table_set_default int_inst_0003 int_set_header_0003_i0
 table_set_default int_inst_0407 int_set_header_0407_i0
-set_queue_rate 35
-set_queue_depth 500
+set_queue_rate 150
+set_queue_depth 1000
 
 
 table_add int_inst_0003 int_set_header_0003_i0 0 =>

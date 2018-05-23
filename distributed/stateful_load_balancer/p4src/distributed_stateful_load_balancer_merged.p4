@@ -77,7 +77,7 @@ metadata intrinsic_metadata_t intrinsic_metadata;
 
 field_list flow_list {
     load_balancer_head.fid;
-    //subfid
+    load_balancer_head.subfid;
 }
 
 field_list_calculation flow_register_index {
@@ -290,7 +290,8 @@ action update_min_flow_len2(){
 action send_update(){
     modify_field(load_balancer_head.preamble,2);
     modify_field(switch_info_head.swid,16);
-    modify_field(switch_info_head.flow_num,meta.min_flow_len);
+    //modify_field(switch_info_head.flow_num,meta.min_flow_len);
+    modify_field(switch_info_head.flow_num,meta.server_flow1+meta.server_flow2);
     modify_field(load_balancer_head._count, standard_metadata.ingress_port);
     modify_field(standard_metadata.egress_spec, standard_metadata.ingress_port);
 }
@@ -373,7 +374,8 @@ action send_broadcast_update(){
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
     modify_field(load_balancer_head.preamble,2);
     modify_field(switch_info_head.swid,16);
-    modify_field(switch_info_head.flow_num,meta.min_flow_len);
+    //modify_field(switch_info_head.flow_num,meta.min_flow_len);
+    modify_field(switch_info_head.flow_num,meta.server_flow1+meta.server_flow2);
     modify_field(intrinsic_metadata.mcast_grp, 1);
 }
 
@@ -387,14 +389,14 @@ control ingress {
     apply(get_server_flow_count_table); 
 
     //Preamble 1 => Probe packet 
-    /*if (load_balancer_head.preamble == 1){
+    if (load_balancer_head.preamble == 1){
         //Find server with less number of flows
-        if(meta.server_flow1 < meta.server_flow2){
+        /*if(meta.server_flow1 < meta.server_flow2){
             apply(update_min_flow_len1_table1);
         }
         else{
             apply(update_min_flow_len2_table1);
-        }
+        }*/
         //Send update (set preamble as 2)
         apply(send_update_table);
     }
@@ -404,7 +406,7 @@ control ingress {
         apply(update_switch_flow_count_table);
     }
     //Default Preamble is 0
-    else {*/
+    else {
 
         //-------------------------------------------------------------------------
         //Start of flow
@@ -416,9 +418,9 @@ control ingress {
                 apply(set_server_dest_port_table);
 
                 //Take decision to send probe packet or not (Reactive)
-                /*if ((meta.server_flow1 + meta.server_flow2)*100 > (UPPER_LIMIT * SERVERS * THRESHOLD)){
+                if ((meta.server_flow1 + meta.server_flow2)*100 > (UPPER_LIMIT * SERVERS * THRESHOLD)){
                     apply(set_probe_bool_table);
-                }*/
+                }
             }
             //Forwarding to another switch
             else{
@@ -463,22 +465,22 @@ control ingress {
             apply(update_flow_count_table);
 
             //Take decision to send probe packet or not (Proactive)
-            /*if ((meta.server_flow1 + meta.server_flow2)*100 < (LOWER_LIMIT * SERVERS * THRESHOLD)){
+            if ((meta.server_flow1 + meta.server_flow2)*100 < (LOWER_LIMIT * SERVERS * THRESHOLD)){
                 if(meta.routing_port == 2 or meta.routing_port == 3){
                     //Find server with less number of flows
-                    if(meta.server_flow1 < meta.server_flow2){
+                    /*if(meta.server_flow1 < meta.server_flow2){
                         apply(update_min_flow_len1_table2);
                     }
                     else{
                         apply(update_min_flow_len2_table2);
-                    }
+                    }*/
                     //Send broadcast (set preamble as 2)
                     apply(send_broadcast_update_table);
                 }
-            }*/
+            }
         }
         //-------------------------------------------------------------------------
-    //}
+    }
 }
 
 control egress {
