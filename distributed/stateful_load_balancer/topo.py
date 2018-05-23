@@ -100,7 +100,7 @@ def main():
 	sleep(1)
 
 	for i in xrange(nb_switches):
-		cmd = [args.cli, "--json", args.json,
+		cmd = [args.cli, "--json", args.json + "_" + str(i + 1) + ".json" ,
 			   "--thrift-port", str(_THRIFT_BASE_PORT + i)]
 
 		with open("commands.txt", "r") as f:

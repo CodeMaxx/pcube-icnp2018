@@ -36,16 +36,20 @@ CLI_PATH=$BMV2_PATH/tools/modified_runtime_CLI.py
 python topo_to_json.py
 
 ###--- Generate sync_commands.txt
-# python generate_sync_commands.py
+python generate_sync_commands.py
 
-###--- Compile p4 
-$P4C_BM_SCRIPT p4src/distributed_stateful_load_balancer_$1.p4 --json distributed_stateful_load_balancer_$1.json
-sudo $SWITCH_PATH >/dev/null 2>&1	
+###--- Create P4 for each switch; format : "<filename>_<switch_id>.p4"
 
-###--- Create json for each switch; format : "<filename>_<switch_id>.p4"
+
+###--- Compile p4 for all switches
+for j in `seq 1 $2`
+do
+    $P4C_BM_SCRIPT p4src/distributed_stateful_load_balancer_$1_$j.p4 --json distributed_stateful_load_balancer_$1_$j.json
+    sudo $SWITCH_PATH >/dev/null 2>&1
+done
 
 ###--- Burn json for each switch individually using topo.py
 sudo PYTHONPATH=$PYTHONPATH:$BMV2_PATH/mininet/ python topo.py \
     --behavioral-exe $SWITCH_PATH \
-    --json distributed_stateful_load_balancer_$1.json \
+    --json distributed_stateful_load_balancer_$1 \
     --cli $CLI_PATH
