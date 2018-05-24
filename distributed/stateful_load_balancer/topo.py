@@ -25,8 +25,9 @@ from p4_mininet import P4Switch, P4Host
 from time import sleep
 import subprocess
 import argparse
-import json
 import os
+
+from topo_to_json import get_topo_data
 
 _THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 _THRIFT_BASE_PORT = 22222
@@ -47,6 +48,7 @@ class MyTopo(Topo):
 		Topo.__init__(self, **opts)
 
 		for i in xrange(nb_switches):
+			print(json_path)
 			switch = self.addSwitch('s%d' % (i + 1),
 									sw_path = sw_path,
 									json_path = json_path,
@@ -62,21 +64,13 @@ class MyTopo(Topo):
 
 def main():
 
-	### Read from Json dump
-	with open('topo.json','r') as f:
-		data = json.load(f)
-	nb_switches = int(data.pop("nb_switches"))
-	nb_hosts = int(data.pop("nb_hosts"))
-	links = []
-	for k in data["links"]:
-		k = str(k)
-		a, b = str(data["links"][k]["_0"]), str(data["links"][k]["_1"])
-		links.append( (a,b) )
-	###
+	topo_data = get_topo_data()
 
 	topo = MyTopo(args.behavioral_exe,
 				  args.json,
-				  nb_hosts, nb_switches, links)
+				  topo_data["nb_hosts"], 
+				  topo_data["nb_switches"], 
+				  topo_data["links"])
 
 	net = Mininet(topo = topo,
 				  host = P4Host,
@@ -103,7 +97,7 @@ def main():
 		cmd = [args.cli, "--json", args.json + "_" + str(i + 1) + ".json" ,
 			   "--thrift-port", str(_THRIFT_BASE_PORT + i)]
 
-		with open("commands.txt", "r") as f:
+		with open("commands_s%d.txt"%( i+1 ), "r") as f:
 			print " ".join(cmd)
 			try:
 				output = subprocess.check_output(cmd, stdin = f)
@@ -112,7 +106,7 @@ def main():
 				print e
 				print e.output
 
-		with open("sync_commands.txt", "r") as f:
+		with open("sync_commands_s%d.txt"%( i+1 ), "r") as f:
 			print " ".join(cmd)
 			try:
 				output = subprocess.check_output(cmd, stdin = f)

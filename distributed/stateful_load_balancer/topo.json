@@ -1,6 +1,6 @@
 {
-    "nb_switches": "4", 
-    "nb_hosts": "14", 
+    "nb_switches": 4, 
+    "nb_hosts": 14, 
     "links": {
         "_0": {
             "_0": "h1", 
@@ -73,6 +73,24 @@
         "_17": {
             "_0": "s2", 
             "_1": "s4"
+        }
+    }, 
+    "topo_stats": {
+        "s1": {
+            "SWITCHES": 3, 
+            "SERVERS": 2
+        }, 
+        "s2": {
+            "SWITCHES": 2, 
+            "SERVERS": 3
+        }, 
+        "s3": {
+            "SWITCHES": 1, 
+            "SERVERS": 4
+        }, 
+        "s4": {
+            "SWITCHES": 2, 
+            "SERVERS": 5
         }
     }
 }

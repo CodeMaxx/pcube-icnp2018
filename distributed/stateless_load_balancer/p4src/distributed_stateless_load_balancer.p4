@@ -27,6 +27,10 @@ header_type load_balancer_t {
         syn: 32;
         fin: 32;
         fid: 32;
+        subfid : 32;
+        packet_id : 32;
+        hash : 32;
+        _count : 32;
     }
 }
 header load_balancer_t load_balancer_head;

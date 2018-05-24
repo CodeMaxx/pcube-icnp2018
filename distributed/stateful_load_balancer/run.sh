@@ -39,7 +39,7 @@ python topo_to_json.py
 python generate_sync_commands.py
 
 ###--- Create P4 for each switch; format : "<filename>_<switch_id>.p4"
-
+# python3 p4src/generate_p4.py p4src/distributed_stateful_load_balancer_$1.ip4
 
 ###--- Compile p4 for all switches
 for j in `seq 1 $2`

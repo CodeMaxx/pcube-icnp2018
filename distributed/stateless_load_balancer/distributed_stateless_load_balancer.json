@@ -66,6 +66,22 @@
                 [
                     "fid",
                     32
+                ],
+                [
+                    "subfid",
+                    32
+                ],
+                [
+                    "packet_id",
+                    32
+                ],
+                [
+                    "hash",
+                    32
+                ],
+                [
+                    "_count",
+                    32
                 ]
             ],
             "length_exp": null,

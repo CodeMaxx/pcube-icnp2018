@@ -17,8 +17,8 @@
 
 #define UPPER_LIMIT 80
 #define LOWER_LIMIT 20
-#define SERVERS 4
-#define SWITCHES 3
+#define SERVERS 2
+#define SWITCHES 12
 #define THRESHOLD 99
 #define SQTHRESHOLD 10000
 
@@ -51,13 +51,18 @@ header_type meta_t {
         temp : 32;
 
             server_flow1 : 32;
-            server_flow2 : 32;
-            server_flow3 : 32;
-            server_flow4 : 32;
 
             switch_flow1 : 32;
             switch_flow2 : 32;
             switch_flow3 : 32;
+            switch_flow4 : 32;
+            switch_flow5 : 32;
+            switch_flow6 : 32;
+            switch_flow7 : 32;
+            switch_flow8 : 32;
+            switch_flow9 : 32;
+            switch_flow10 : 32;
+            switch_flow11 : 32;
 
         hash: 16;
         routing_port: 32;
@@ -140,24 +145,6 @@ table get_server_flow_count_table{
         }
         size: 1;
     }
-    table update_min_flow_len2_table1 {
-        actions{
-            update_min_flow_len2;
-        }
-        size: 1;
-    }
-    table update_min_flow_len3_table1 {
-        actions{
-            update_min_flow_len3;
-        }
-        size: 1;
-    }
-    table update_min_flow_len4_table1 {
-        actions{
-            update_min_flow_len4;
-        }
-        size: 1;
-    }
 
 table send_update_table {
     actions{
@@ -176,9 +163,6 @@ table update_switch_flow_count_table {
 table set_server_dest_port_table{
     reads{
             meta.server_flow1 : exact;
-            meta.server_flow2 : exact;
-            meta.server_flow3 : exact;
-            meta.server_flow4 : exact;
     }
     actions{
         set_server_dest_port;
@@ -215,6 +199,54 @@ table get_switch_flow_count_table{
     table set_switch3_dest_port_table{
         actions{
             set_switch3_dest_port;
+        }
+        size:1;
+    }
+    table set_switch4_dest_port_table{
+        actions{
+            set_switch4_dest_port;
+        }
+        size:1;
+    }
+    table set_switch5_dest_port_table{
+        actions{
+            set_switch5_dest_port;
+        }
+        size:1;
+    }
+    table set_switch6_dest_port_table{
+        actions{
+            set_switch6_dest_port;
+        }
+        size:1;
+    }
+    table set_switch7_dest_port_table{
+        actions{
+            set_switch7_dest_port;
+        }
+        size:1;
+    }
+    table set_switch8_dest_port_table{
+        actions{
+            set_switch8_dest_port;
+        }
+        size:1;
+    }
+    table set_switch9_dest_port_table{
+        actions{
+            set_switch9_dest_port;
+        }
+        size:1;
+    }
+    table set_switch10_dest_port_table{
+        actions{
+            set_switch10_dest_port;
+        }
+        size:1;
+    }
+    table set_switch11_dest_port_table{
+        actions{
+            set_switch11_dest_port;
         }
         size:1;
     }
@@ -271,24 +303,6 @@ table update_flow_count_table {
         }
         size: 1;
     }
-    table update_min_flow_len2_table2 {
-        actions{
-            update_min_flow_len2;
-        }
-        size: 1;
-    }
-    table update_min_flow_len3_table2 {
-        actions{
-            update_min_flow_len3;
-        }
-        size: 1;
-    }
-    table update_min_flow_len4_table2 {
-        actions{
-            update_min_flow_len4;
-        }
-        size: 1;
-    }
 
 table send_broadcast_update_table {
     actions{
@@ -302,22 +316,10 @@ table send_broadcast_update_table {
 action get_server_flow_count(){
 
         register_read(meta.server_flow1,total_flow_count_register,1 - 1);
-        register_read(meta.server_flow2,total_flow_count_register,2 - 1);
-        register_read(meta.server_flow3,total_flow_count_register,3 - 1);
-        register_read(meta.server_flow4,total_flow_count_register,4 - 1);
 }
 
     action update_min_flow_len1(){
         modify_field(meta.min_flow_len, meta.server_flow1);
-    }
-    action update_min_flow_len2(){
-        modify_field(meta.min_flow_len, meta.server_flow2);
-    }
-    action update_min_flow_len3(){
-        modify_field(meta.min_flow_len, meta.server_flow3);
-    }
-    action update_min_flow_len4(){
-        modify_field(meta.min_flow_len, meta.server_flow4);
     }
 
 action send_update(){
@@ -345,6 +347,14 @@ action get_switch_flow_count(){
         register_read(meta.switch_flow1,total_flow_count_register,1 + SWITCHES - 1);
         register_read(meta.switch_flow2,total_flow_count_register,2 + SWITCHES - 1);
         register_read(meta.switch_flow3,total_flow_count_register,3 + SWITCHES - 1);
+        register_read(meta.switch_flow4,total_flow_count_register,4 + SWITCHES - 1);
+        register_read(meta.switch_flow5,total_flow_count_register,5 + SWITCHES - 1);
+        register_read(meta.switch_flow6,total_flow_count_register,6 + SWITCHES - 1);
+        register_read(meta.switch_flow7,total_flow_count_register,7 + SWITCHES - 1);
+        register_read(meta.switch_flow8,total_flow_count_register,8 + SWITCHES - 1);
+        register_read(meta.switch_flow9,total_flow_count_register,9 + SWITCHES - 1);
+        register_read(meta.switch_flow10,total_flow_count_register,10 + SWITCHES - 1);
+        register_read(meta.switch_flow11,total_flow_count_register,11 + SWITCHES - 1);
 }
 
     action set_switch1_dest_port(){
@@ -358,6 +368,38 @@ action get_switch_flow_count(){
     action set_switch3_dest_port(){
         register_write(total_flow_count_register,3 + SWITCHES - 1, meta.switch_flow3 + 1);
         modify_field(standard_metadata.egress_spec,3 + SWITCHES + 1);
+    }
+    action set_switch4_dest_port(){
+        register_write(total_flow_count_register,4 + SWITCHES - 1, meta.switch_flow4 + 1);
+        modify_field(standard_metadata.egress_spec,4 + SWITCHES + 1);
+    }
+    action set_switch5_dest_port(){
+        register_write(total_flow_count_register,5 + SWITCHES - 1, meta.switch_flow5 + 1);
+        modify_field(standard_metadata.egress_spec,5 + SWITCHES + 1);
+    }
+    action set_switch6_dest_port(){
+        register_write(total_flow_count_register,6 + SWITCHES - 1, meta.switch_flow6 + 1);
+        modify_field(standard_metadata.egress_spec,6 + SWITCHES + 1);
+    }
+    action set_switch7_dest_port(){
+        register_write(total_flow_count_register,7 + SWITCHES - 1, meta.switch_flow7 + 1);
+        modify_field(standard_metadata.egress_spec,7 + SWITCHES + 1);
+    }
+    action set_switch8_dest_port(){
+        register_write(total_flow_count_register,8 + SWITCHES - 1, meta.switch_flow8 + 1);
+        modify_field(standard_metadata.egress_spec,8 + SWITCHES + 1);
+    }
+    action set_switch9_dest_port(){
+        register_write(total_flow_count_register,9 + SWITCHES - 1, meta.switch_flow9 + 1);
+        modify_field(standard_metadata.egress_spec,9 + SWITCHES + 1);
+    }
+    action set_switch10_dest_port(){
+        register_write(total_flow_count_register,10 + SWITCHES - 1, meta.switch_flow10 + 1);
+        modify_field(standard_metadata.egress_spec,10 + SWITCHES + 1);
+    }
+    action set_switch11_dest_port(){
+        register_write(total_flow_count_register,11 + SWITCHES - 1, meta.switch_flow11 + 1);
+        modify_field(standard_metadata.egress_spec,11 + SWITCHES + 1);
     }
 
 action update_map() {
@@ -447,7 +489,7 @@ control ingress {
                 apply(set_server_dest_port_table);
 
                 //Take decision to send probe packet or not (Reactive)
-                if ((meta.server_flow1 + meta.server_flow2)*100 > (UPPER_LIMIT * SERVERS * THRESHOLD)){
+if ((meta.server_flow1 + meta.server_flow2)*100 > (UPPER_LIMIT * SERVERS * THRESHOLD)){
                     apply(set_probe_bool_table);
                 }
             }
@@ -472,14 +514,38 @@ control ingress {
                     apply(drop_table);
                 }
                 else {
-                        if(meta.switch_flow2 <= meta.switch_flow3 and meta.switch_flow2 <= meta.switch_flow1) {
+                        if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3 and meta.switch_flow1 <= meta.switch_flow4 and meta.switch_flow1 <= meta.switch_flow5 and meta.switch_flow1 <= meta.switch_flow6 and meta.switch_flow1 <= meta.switch_flow7 and meta.switch_flow1 <= meta.switch_flow8 and meta.switch_flow1 <= meta.switch_flow9 and meta.switch_flow1 <= meta.switch_flow10 and meta.switch_flow1 <= meta.switch_flow11) {
+                            apply(set_switch1_dest_port_table);
+                        }
+                        else if(meta.switch_flow2 <= meta.switch_flow1 and meta.switch_flow2 <= meta.switch_flow3 and meta.switch_flow2 <= meta.switch_flow4 and meta.switch_flow2 <= meta.switch_flow5 and meta.switch_flow2 <= meta.switch_flow6 and meta.switch_flow2 <= meta.switch_flow7 and meta.switch_flow2 <= meta.switch_flow8 and meta.switch_flow2 <= meta.switch_flow9 and meta.switch_flow2 <= meta.switch_flow10 and meta.switch_flow2 <= meta.switch_flow11) {
                             apply(set_switch2_dest_port_table);
                         }
-                        else if(meta.switch_flow3 <= meta.switch_flow2 and meta.switch_flow3 <= meta.switch_flow1) {
+                        else if(meta.switch_flow3 <= meta.switch_flow1 and meta.switch_flow3 <= meta.switch_flow2 and meta.switch_flow3 <= meta.switch_flow4 and meta.switch_flow3 <= meta.switch_flow5 and meta.switch_flow3 <= meta.switch_flow6 and meta.switch_flow3 <= meta.switch_flow7 and meta.switch_flow3 <= meta.switch_flow8 and meta.switch_flow3 <= meta.switch_flow9 and meta.switch_flow3 <= meta.switch_flow10 and meta.switch_flow3 <= meta.switch_flow11) {
                             apply(set_switch3_dest_port_table);
                         }
-                        else if(meta.switch_flow1 <= meta.switch_flow2 and meta.switch_flow1 <= meta.switch_flow3 and ) {
-                            apply(set_switch1_dest_port_table);
+                        else if(meta.switch_flow4 <= meta.switch_flow1 and meta.switch_flow4 <= meta.switch_flow2 and meta.switch_flow4 <= meta.switch_flow3 and meta.switch_flow4 <= meta.switch_flow5 and meta.switch_flow4 <= meta.switch_flow6 and meta.switch_flow4 <= meta.switch_flow7 and meta.switch_flow4 <= meta.switch_flow8 and meta.switch_flow4 <= meta.switch_flow9 and meta.switch_flow4 <= meta.switch_flow10 and meta.switch_flow4 <= meta.switch_flow11) {
+                            apply(set_switch4_dest_port_table);
+                        }
+                        else if(meta.switch_flow5 <= meta.switch_flow1 and meta.switch_flow5 <= meta.switch_flow2 and meta.switch_flow5 <= meta.switch_flow3 and meta.switch_flow5 <= meta.switch_flow4 and meta.switch_flow5 <= meta.switch_flow6 and meta.switch_flow5 <= meta.switch_flow7 and meta.switch_flow5 <= meta.switch_flow8 and meta.switch_flow5 <= meta.switch_flow9 and meta.switch_flow5 <= meta.switch_flow10 and meta.switch_flow5 <= meta.switch_flow11) {
+                            apply(set_switch5_dest_port_table);
+                        }
+                        else if(meta.switch_flow6 <= meta.switch_flow1 and meta.switch_flow6 <= meta.switch_flow2 and meta.switch_flow6 <= meta.switch_flow3 and meta.switch_flow6 <= meta.switch_flow4 and meta.switch_flow6 <= meta.switch_flow5 and meta.switch_flow6 <= meta.switch_flow7 and meta.switch_flow6 <= meta.switch_flow8 and meta.switch_flow6 <= meta.switch_flow9 and meta.switch_flow6 <= meta.switch_flow10 and meta.switch_flow6 <= meta.switch_flow11) {
+                            apply(set_switch6_dest_port_table);
+                        }
+                        else if(meta.switch_flow7 <= meta.switch_flow1 and meta.switch_flow7 <= meta.switch_flow2 and meta.switch_flow7 <= meta.switch_flow3 and meta.switch_flow7 <= meta.switch_flow4 and meta.switch_flow7 <= meta.switch_flow5 and meta.switch_flow7 <= meta.switch_flow6 and meta.switch_flow7 <= meta.switch_flow8 and meta.switch_flow7 <= meta.switch_flow9 and meta.switch_flow7 <= meta.switch_flow10 and meta.switch_flow7 <= meta.switch_flow11) {
+                            apply(set_switch7_dest_port_table);
+                        }
+                        else if(meta.switch_flow8 <= meta.switch_flow1 and meta.switch_flow8 <= meta.switch_flow2 and meta.switch_flow8 <= meta.switch_flow3 and meta.switch_flow8 <= meta.switch_flow4 and meta.switch_flow8 <= meta.switch_flow5 and meta.switch_flow8 <= meta.switch_flow6 and meta.switch_flow8 <= meta.switch_flow7 and meta.switch_flow8 <= meta.switch_flow9 and meta.switch_flow8 <= meta.switch_flow10 and meta.switch_flow8 <= meta.switch_flow11) {
+                            apply(set_switch8_dest_port_table);
+                        }
+                        else if(meta.switch_flow9 <= meta.switch_flow1 and meta.switch_flow9 <= meta.switch_flow2 and meta.switch_flow9 <= meta.switch_flow3 and meta.switch_flow9 <= meta.switch_flow4 and meta.switch_flow9 <= meta.switch_flow5 and meta.switch_flow9 <= meta.switch_flow6 and meta.switch_flow9 <= meta.switch_flow7 and meta.switch_flow9 <= meta.switch_flow8 and meta.switch_flow9 <= meta.switch_flow10 and meta.switch_flow9 <= meta.switch_flow11) {
+                            apply(set_switch9_dest_port_table);
+                        }
+                        else if(meta.switch_flow10 <= meta.switch_flow1 and meta.switch_flow10 <= meta.switch_flow2 and meta.switch_flow10 <= meta.switch_flow3 and meta.switch_flow10 <= meta.switch_flow4 and meta.switch_flow10 <= meta.switch_flow5 and meta.switch_flow10 <= meta.switch_flow6 and meta.switch_flow10 <= meta.switch_flow7 and meta.switch_flow10 <= meta.switch_flow8 and meta.switch_flow10 <= meta.switch_flow9 and meta.switch_flow10 <= meta.switch_flow11) {
+                            apply(set_switch10_dest_port_table);
+                        }
+                        else if(meta.switch_flow11 <= meta.switch_flow1 and meta.switch_flow11 <= meta.switch_flow2 and meta.switch_flow11 <= meta.switch_flow3 and meta.switch_flow11 <= meta.switch_flow4 and meta.switch_flow11 <= meta.switch_flow5 and meta.switch_flow11 <= meta.switch_flow6 and meta.switch_flow11 <= meta.switch_flow7 and meta.switch_flow11 <= meta.switch_flow8 and meta.switch_flow11 <= meta.switch_flow9 and meta.switch_flow11 <= meta.switch_flow10) {
+                            apply(set_switch11_dest_port_table);
                         }
                 }
                 
@@ -510,7 +576,7 @@ control ingress {
             apply(update_flow_count_table);
 
             //Take decision to send probe packet or not (Proactive)
-            if ((meta.server_flow1 + meta.server_flow2)*100 < (LOWER_LIMIT * SERVERS * THRESHOLD)){
+if ((meta.server_flow1 + meta.server_flow2)*100 < (LOWER_LIMIT * SERVERS * THRESHOLD)){
                 if(meta.routing_port == 2 or meta.routing_port == 3){
                     //Find server with less number of flows
                     if(meta.server_flow1 < meta.server_flow2){
