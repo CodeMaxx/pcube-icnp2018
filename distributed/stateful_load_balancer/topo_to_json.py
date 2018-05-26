@@ -6,6 +6,14 @@ def get_topo_data():
         data = json.load(f)
     return data
 
+def get_links(json_links):
+    links = []
+    for key in json_links:
+        link = json_links[key]
+        a, b = link["_0"], link["_1"]  
+        links.append( (a, b) )
+    return links
+
 def read_topo():
     nb_hosts = 0
     nb_switches = 0

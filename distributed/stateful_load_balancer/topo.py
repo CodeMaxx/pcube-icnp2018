@@ -27,7 +27,7 @@ import subprocess
 import argparse
 import os
 
-from topo_to_json import get_topo_data
+from topo_to_json import get_topo_data, get_links
 
 _THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 _THRIFT_BASE_PORT = 22222
@@ -70,7 +70,7 @@ def main():
 				  args.json,
 				  topo_data["nb_hosts"], 
 				  topo_data["nb_switches"], 
-				  topo_data["links"])
+				  get_links(topo_data["links"]))
 
 	net = Mininet(topo = topo,
 				  host = P4Host,
