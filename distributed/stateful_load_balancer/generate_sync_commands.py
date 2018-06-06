@@ -7,6 +7,7 @@ MIRRORING_ADD = "mirroring_add %d %d\n"
 
 def generate_sync_commands(topo_stats):
 	mgrp_no = 1
+	
 	node_no = 1
 
 	#Need to sort keys to keep a one to one mapping for switch number to mcast group
@@ -25,7 +26,7 @@ def generate_sync_commands(topo_stats):
 			f.write(ASSOCIATE_NODE % (mgrp_no, node_no))
 			node_no += 1
 		mgrp_no += 1
-		
+
 		for i in range(1, total_ports + 1):
 			f.write(MIRRORING_ADD % (i, i))
 		f.close()
