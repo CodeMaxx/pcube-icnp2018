@@ -35,6 +35,13 @@ CLI_PATH=$BMV2_PATH/tools/modified_runtime_CLI.py
 ###--- Read topo, create json dump of topology
 python topo_to_json.py
 
+###--- Generate p4 for all switches from ip4
+python3 generate_p4.py distributed_stateful_load_balancer_merged.ip4
+
+###--- Generate commands for sending packets to lowest load server
+# 5 is Threshold here
+python generate_commands.py merged 5
+
 ###--- Generate sync_commands.txt
 python generate_sync_commands.py
 
