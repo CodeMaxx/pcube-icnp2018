@@ -18,6 +18,7 @@
 #define UPPER_LIMIT 80
 #define LOWER_LIMIT 20
 #define SERVERS 2
+#define SERVERPLUSONE 3
 #define SWITCHES 12
 #define SWITCHMINUSONE 11
 #define MCAST_GRP 1
@@ -51,7 +52,7 @@ header_type meta_t {
     fields {
         temp : 32;
 
-        @for (i) [1,SERVERS,1]
+        @for (i) [1,SERVERPLUSONE,1]
             server_flow$i : 32;
         @endfor
 
@@ -134,7 +135,7 @@ table get_server_flow_count_table{
     size:1;
 }
 
-@for (i) [1,SERVERS,1]
+@for (i) [1,SERVERPLUSONE,1]
     table update_min_flow_len$i_table1 {
         actions{
             update_min_flow_len$i;
@@ -159,7 +160,7 @@ table update_switch_flow_count_table {
 
 table set_server_dest_port_table{
     reads{
-        @for (i) [1,SERVERS,1]
+        @for (i) [1,SERVERPLUSONE,1]
             meta.server_flow$i : exact;
         @endfor
     }
@@ -238,7 +239,7 @@ table update_flow_count_table {
     size: 1;
 }
 
-@for (i) [1,SERVERS,1]
+@for (i) [1,SERVERPLUSONE,1]
     table update_min_flow_len$i_table2 {
         actions{
             update_min_flow_len$i;
@@ -258,12 +259,12 @@ table send_broadcast_update_table {
 
 action get_server_flow_count(){
 
-    @for (i) [1,SERVERS,1]
+    @for (i) [1,SERVERPLUSONE,1]
         register_read(meta.server_flow$i,total_flow_count_register,$i - 1);
     @endfor
 }
 
-@for (i) [1,SERVERS,1]
+@for (i) [1,SERVERPLUSONE,1]
     action update_min_flow_len$i(){
         modify_field(meta.min_flow_len, meta.server_flow$i);
     }
@@ -272,7 +273,7 @@ action get_server_flow_count(){
 //--->Will be generated as _mirror_1() in a separate file
 action send_update(){
     modify_field(load_balancer_head.preamble,2);
-    modify_field(sync_info_head.flow_num,(@sum (1, SERVERS)(meta.server_flow$i));
+    modify_field(sync_info_head.flow_num,(@sum (1, SERVERPLUSONE)(meta.server_flow$i));
     modify_field(standard_metadata.egress_spec, standard_metadata.ingress_port);
 }
 
@@ -345,7 +346,7 @@ action update_flow_count() {
 action send_broadcast_update(){
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
     modify_field(load_balancer_head.preamble,2);
-    modify_field(sync_info_head.flow_num,(@sum (1, SERVERS)(meta.server_flow$i));
+    modify_field(sync_info_head.flow_num,(@sum (1, SERVERPLUSONE)(meta.server_flow$i));
     modify_field(intrinsic_metadata.mcast_grp, MCAST_GRP);
 }
 
@@ -364,7 +365,7 @@ control ingress {
         //Send update (set preamble as 2)
         @mirror(true,
                 2,
-                (@sum (1, SERVERS)(meta.server_flow$i))
+                (@sum (1, SERVERPLUSONE)(meta.server_flow$i)))
         //--->apply(send_update_table);
     }
     //Preamble 2 => Update packet
@@ -380,12 +381,12 @@ control ingress {
         if(load_balancer_head.syn == 1) {
 
             //Forwarding to own server
-            if(@bool[1,SERVERS,1](<) [meta.server_flow1, THRESHOLD]){
+            if(@bool (1,SERVERPLUSONE,1)(<)(meta.server_flow$i, THRESHOLD)){
                 //Forwarding can be done locally
                 apply(set_server_dest_port_table);
 
                 //Take decision to send probe packet or not (Reactive)
-                if ((@sum (1, SERVERS)(meta.server_flow$i))*100 > (UPPER_LIMIT * SERVERS * THRESHOLD)){
+                if ((@sum (1, SERVERPLUSONE)(meta.server_flow$i))*100 > (UPPER_LIMIT * SERVERS * THRESHOLD)){
                     apply(set_probe_bool_table);
                 }
             }
@@ -394,7 +395,7 @@ control ingress {
                 //Choose from switches
                 apply(get_switch_flow_count_table);
 
-                if (@bool[1,SWITCHES,1](>=) [meta.switch_flow$i, 2*THRESHOLD] ){
+                if (@bool (1,SWITCHES,1)(>=)(meta.switch_flow$i, 2*THRESHOLD)){
                     apply(drop_table);
                 }
                 else {
@@ -438,10 +439,10 @@ control ingress {
 
             //Take decision to send probe packet or not (Proactive)
             @sync(
-                ( @sum (1, SERVERS)(meta.server_flow$i))*100 < (LOWER_LIMIT * SERVERS * THRESHOLD) and (meta.routing_port == 2 or meta.routing_port == 3),
+                ( @sum (1, SERVERPLUSONE)(meta.server_flow$i))*100 < (LOWER_LIMIT * SERVERS * THRESHOLD) and (meta.routing_port == 2 or meta.routing_port == 3),
                     2,
                     MCAST_GRP,
-                    (@sum (1, SERVERS)(meta.server_flow$i)))
+                    (@sum (1, SERVERPLUSONE)(meta.server_flow$i)))
             
             /*--->if ((@sum (1, 3)(meta.server_flow$i))*100 < (LOWER_LIMIT * SERVERS * THRESHOLD)){
                 if(meta.routing_port == 2 or meta.routing_port == 3){

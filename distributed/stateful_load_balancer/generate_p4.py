@@ -38,27 +38,36 @@ KEYWORDS = {
     'endcompare':	'@endcompare',
     'case'		:	'@case',
     'endcase'	:	'@endcase',
-    'sum'		:	'@sum'
+    'sum'		:	'@sum',
+    'bool'      :   '@bool'
 }
 
 TOPO_DATA = None
 
-# Can read in any #define constant and replaces them if present as a parameter for `for` loop
-# For e.g. Number of servers
-# TODO: Do an initial pass for CONSTANTS so that they can be used in all features not just loops
-
 class p4_code_generator():
 
-    def __init__(self, switch_id, src, destfor, destcmp, dest):
+    def __init__(self, switch_id, src, dest):
         self.switch_id = switch_id
         self.string_id = 's%d'%switch_id
         self.src = src
-        self.destfor = destfor
-        self.destcmp = destcmp
+        self.destfor = dest + ".for"
+        self.destcmp = dest + ".cmp"
+        self.destsum = dest + ".sum"
+        self.tempfiles = [self.destfor, self.destfor + ".bak", self.destcmp, self.destsum]
         self.dest = dest
         self.constants = {
             "MCAST_GRP": switch_id
         }
+    
+    def expand(self):
+        self.expand_for()
+        self.replace_constants()
+        self.expand_compare()
+        self.expand_sum()
+        self.expand_bool()
+        self.generate_commands_template()
+        for f in self.tempfiles:
+            os.system('rm -f %s' % f)
 
     # Replaces the ip4 for loop format by sequential p4 code
     def roll_out_forloop(self,content,iter_var,dfile,start,end,step):
@@ -83,6 +92,9 @@ class p4_code_generator():
 
         sfile = open(self.src,'r')
         dfile = open(self.destfor,'w')
+        
+        # Can read in any #define constant and replaces them if present as a parameter for `for` loop
+        # For e.g. Number of servers
 
         # Loop through ip4 source
         for row in sfile:
@@ -201,7 +213,7 @@ class p4_code_generator():
 
     def expand_sum(self):
         sfile = open(self.destcmp, 'r')
-        dfile = open(self.dest, 'w')
+        dfile = open(self.destsum, 'w')
 
         sum_format = Keyword(KEYWORDS['sum']) + '(' + Word(nums)("start") + "," + Word(nums)("end") + ')' \
                         + '(' + Regex(r'[^\s\(\)]*')("var") + ')'
@@ -225,8 +237,38 @@ class p4_code_generator():
         
         sfile.close()
         dfile.close()
+    
+    def expand_bool(self):
+        sfile = open(self.destsum, 'r')
+        dfile = open(self.dest, 'w')
 
-    def generate_basic_commands(self):
+        bool_format = Keyword(KEYWORDS['bool']) + '(' + Word(nums)("start") + "," + Word(nums)("end") + ","      + Word(nums)("jump") + ')' + '(' + Regex(r'[^\s\(\)]*')('op') + ')' + '(' + Regex(r'[^\s\(\),]*')("var") + "," + Regex(r'[^\s\(\),]*')("operand") + ')'
+        line_bool_format = Regex(r'[^\@]*')("before") + \
+            bool_format + Regex(r'[^\@]*')("after")
+
+        for line in sfile:
+            if KEYWORDS['bool'] in line:
+                # import pdb; pdb.set_trace()
+                res = line_bool_format.parseString(line)
+                start = int(res.start)
+                end = int(res.end)
+                jump = int(res.jump)
+                var = res.var
+                operand = res.operand
+                op = res.op
+
+                replacement = res.before
+                for i in range(start, end, jump):
+                    replacement +=  "%s %s %s and " % (var.replace("$i", str(i)), op, operand)
+                replacement = replacement[:-5] + res.after
+                dfile.write(replacement)
+            else:
+                dfile.write(line)
+
+        sfile.close()
+        dfile.close()
+
+    def generate_commands_template(self):
         sfile = open(self.dest, 'r')
         dfile = open('commands_template_merged_%s.txt'%self.string_id, 'w')
         open_brac = Optional(White()) + "{" + Optional(White())
@@ -260,27 +302,10 @@ if __name__ == '__main__':
     num_switches = TOPO_DATA["nb_switches"]
 
     src = sys.argv[1]
-    tempfiles = []
+    
     filename = src[:-4]
 
-    for i in range(1, num_switches + 1): 
-
-        destfor = "%s_s%d.forp4" % (filename,i)
-        destcmp = "%s_s%d.cmpp4" % (filename,i)
+    for i in range(1, num_switches + 1):
         dest = "%s_s%d.p4" % (filename,i)
-
-        tempfiles.append(destfor)
-        tempfiles.append(destcmp)
-
-        code_gen = p4_code_generator(i,src,destfor,destcmp,dest)
-
-        code_gen.expand_for()
-        # print(code_gen.constants)
-        code_gen.replace_constants()
-        code_gen.expand_compare()
-        code_gen.expand_sum()
-        code_gen.generate_basic_commands()
-        tempfiles += [destfor, destcmp, destfor + ".bak"]
-
-    for f in tempfiles:
-        os.system('rm -f %s' % f)
+        code_gen = p4_code_generator(i,src,dest)
+        code_gen.expand()

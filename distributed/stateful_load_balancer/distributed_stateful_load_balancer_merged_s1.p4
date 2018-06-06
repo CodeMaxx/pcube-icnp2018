@@ -18,6 +18,7 @@
 #define 80 80
 #define 20 20
 #define 2 2
+#define 3 3
 #define 12 12
 #define 11 11
 #define 1 1
@@ -52,6 +53,7 @@ header_type meta_t {
         temp : 32;
 
             server_flow1 : 32;
+            server_flow2 : 32;
 
             switch_flow1 : 32;
             switch_flow2 : 32;
@@ -146,6 +148,12 @@ table get_server_flow_count_table{
         }
         size: 1;
     }
+    table update_min_flow_len2_table1 {
+        actions{
+            update_min_flow_len2;
+        }
+        size: 1;
+    }
 
 table send_update_table {
     actions{
@@ -164,6 +172,7 @@ table update_switch_flow_count_table {
 table set_server_dest_port_table{
     reads{
             meta.server_flow1 : exact;
+            meta.server_flow2 : exact;
     }
     actions{
         set_server_dest_port;
@@ -304,6 +313,12 @@ table update_flow_count_table {
         }
         size: 1;
     }
+    table update_min_flow_len2_table2 {
+        actions{
+            update_min_flow_len2;
+        }
+        size: 1;
+    }
 
 table send_broadcast_update_table {
     actions{
@@ -317,16 +332,20 @@ table send_broadcast_update_table {
 action get_server_flow_count(){
 
         register_read(meta.server_flow1,total_flow_count_register,1 - 1);
+        register_read(meta.server_flow2,total_flow_count_register,2 - 1);
 }
 
     action update_min_flow_len1(){
         modify_field(meta.min_flow_len, meta.server_flow1);
     }
+    action update_min_flow_len2(){
+        modify_field(meta.min_flow_len, meta.server_flow2);
+    }
 
 //--->Will be generated as _mirror_1() in a separate file
 action send_update(){
     modify_field(load_balancer_head.preamble,2);
-modify_field(sync_info_head.flow_num,(meta.server_flow1);
+modify_field(sync_info_head.flow_num,(meta.server_flow1 + meta.server_flow2);
     modify_field(standard_metadata.egress_spec, standard_metadata.ingress_port);
 }
 
@@ -445,7 +464,7 @@ action update_flow_count() {
 action send_broadcast_update(){
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
     modify_field(load_balancer_head.preamble,2);
-modify_field(sync_info_head.flow_num,(meta.server_flow1);
+modify_field(sync_info_head.flow_num,(meta.server_flow1 + meta.server_flow2);
     modify_field(intrinsic_metadata.mcast_grp, 1);
 }
 
@@ -464,7 +483,7 @@ control ingress {
         //Send update (set preamble as 2)
         @mirror(true,
                 2,
-(meta.server_flow1)
+(meta.server_flow1 + meta.server_flow2))
         //--->apply(send_update_table);
     }
     //Preamble 2 => Update packet
@@ -480,12 +499,12 @@ control ingress {
         if(load_balancer_head.syn == 1) {
 
             //Forwarding to own server
-            if(@bool[1,2,1](<) [meta.server_flow1, 99]){
+if(meta.server_flow1 < 99 and meta.server_flow2 < 99){
                 //Forwarding can be done locally
                 apply(set_server_dest_port_table);
 
                 //Take decision to send probe packet or not (Reactive)
-if ((meta.server_flow1)*100 > (80 * 2 * 99)){
+if ((meta.server_flow1 + meta.server_flow2)*100 > (80 * 2 * 99)){
                     apply(set_probe_bool_table);
                 }
             }
@@ -494,7 +513,7 @@ if ((meta.server_flow1)*100 > (80 * 2 * 99)){
                 //Choose from switches
                 apply(get_switch_flow_count_table);
 
-                if (@bool[1,12,1](>=) [meta.switch_flow$i, 2*99] ){
+if (meta.switch_flow1 >= 2*99 and meta.switch_flow2 >= 2*99 and meta.switch_flow3 >= 2*99 and meta.switch_flow4 >= 2*99 and meta.switch_flow5 >= 2*99 and meta.switch_flow6 >= 2*99 and meta.switch_flow7 >= 2*99 and meta.switch_flow8 >= 2*99 and meta.switch_flow9 >= 2*99 and meta.switch_flow10 >= 2*99 and meta.switch_flow11 >= 2*99){
                     apply(drop_table);
                 }
                 else {
@@ -564,10 +583,10 @@ if ((meta.server_flow1)*100 > (80 * 2 * 99)){
 
             //Take decision to send probe packet or not (Proactive)
             @sync(
-( meta.server_flow1)*100 < (20 * 2 * 99) and (meta.routing_port == 2 or meta.routing_port == 3),
+( meta.server_flow1 + meta.server_flow2)*100 < (20 * 2 * 99) and (meta.routing_port == 2 or meta.routing_port == 3),
                     2,
                     1,
-(meta.server_flow1))
+(meta.server_flow1 + meta.server_flow2))
             
 /*--->if ((meta.server_flow1 + meta.server_flow2)*100 < (20 * 2 * 99)){
                 if(meta.routing_port == 2 or meta.routing_port == 3){
