@@ -475,9 +475,9 @@ action _drop() {
 //------------------------ Control Logic -----------------
 
 control ingress {
-    apply(get_server_flow_count_table); 
+    apply(get_server_flow_count_table);
 
-    //Preamble 1 => Probe packet 
+    //Preamble 1 => Probe packet
     if (load_balancer_head.preamble == 1){
 
         //Send update (set preamble as 2)
@@ -551,7 +551,7 @@ if (meta.switch_flow1 >= 2*99 and meta.switch_flow2 >= 2*99 and meta.switch_flow
                             apply(set_switch11_dest_port_table);
                         }
                 }
-                
+
             }
 
             //Remember mapping for the flow
@@ -587,10 +587,10 @@ if (meta.switch_flow1 >= 2*99 and meta.switch_flow2 >= 2*99 and meta.switch_flow
                     2,
                     1,
 (meta.server_flow1 + meta.server_flow2))
-            
+
 /*--->if ((meta.server_flow1 + meta.server_flow2)*100 < (20 * 2 * 99)){
                 if(meta.routing_port == 2 or meta.routing_port == 3){
-                    
+
                     //Send broadcast (set preamble as 2)
                     apply(send_broadcast_update_table);
                 }

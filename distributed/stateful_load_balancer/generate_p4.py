@@ -58,7 +58,7 @@ class p4_code_generator():
         self.constants = {
             "MCAST_GRP": switch_id
         }
-    
+
     def expand(self):
         self.expand_for()
         self.replace_constants()
@@ -92,7 +92,7 @@ class p4_code_generator():
 
         sfile = open(self.src,'r')
         dfile = open(self.destfor,'w')
-        
+
         # Can read in any #define constant and replaces them if present as a parameter for `for` loop
         # For e.g. Number of servers
 
@@ -118,8 +118,8 @@ class p4_code_generator():
                     tokens = row.split()
                     # Get the lexeme used as iteration variable
                     iter_var = re.search(r'\((.*)\)',tokens[1]).group(1)
-                    # 
-                    res = re.search(r'\[(.*),(.*),(.*)\]',tokens[2].rstrip('\n'))
+                    #
+                    res = re.search(r'\((.*),(.*),(.*)\)',tokens[2].rstrip('\n'))
                     try:
                         start, end, step = int(res.group(1)), int(res.group(2)), int(res.group(3))
                     except:
@@ -166,7 +166,7 @@ class p4_code_generator():
                 final += '%sif(%s) {\n%s\n%s}\n' % (spaces, cond, varlist[i].rstrip('\n'), spaces)
             else:
                 final += '%selse if(%s) {\n%s\n%s}\n' % (spaces, cond, varlist[i].rstrip('\n'), spaces)
-        
+
         dfile.write(final)
 
     def expand_compare(self):
@@ -174,7 +174,7 @@ class p4_code_generator():
         dfile = open(self.destcmp, 'w')
 
         compare_format = Keyword(KEYWORDS['compare']) + '(' + Word(nums)("num") + \
-                ')' + '(' + Regex(r'[^\s\(\)]*')('op') + ')' 
+                ')' + '(' + Regex(r'[^\s\(\)]*')('op') + ')'
         case_var_format = Word(alphas+"_", alphanums+"_"+".")('var')
         case_format = Keyword(KEYWORDS['case']) + case_var_format + ":"
 
@@ -207,7 +207,7 @@ class p4_code_generator():
                 self.roll_out_compare(varlist, op, dfile)
             else:
                 dfile.write(line)
-            
+
         sfile.close()
         dfile.close()
 
@@ -215,34 +215,35 @@ class p4_code_generator():
         sfile = open(self.destcmp, 'r')
         dfile = open(self.destsum, 'w')
 
-        sum_format = Keyword(KEYWORDS['sum']) + '(' + Word(nums)("start") + "," + Word(nums)("end") + ')' \
+        sum_format = Keyword(KEYWORDS['sum']) + '(' + Word(nums)("start") + "," + Word(nums)("end") + "," + Word(nums)("jump") + ')' \
                         + '(' + Regex(r'[^\s\(\)]*')("var") + ')'
         line_sum_format = Regex(r'[^\@]*')("before") + sum_format + Regex(r'[^\@]*')("after")
-        
+
         for line in sfile:
             if KEYWORDS['sum'] in line:
                 # import pdb; pdb.set_trace()
                 res = line_sum_format.parseString(line)
                 start = int(res.start)
                 end = int(res.end)
+                jump = int(res.jump)
                 var = res.var
 
                 replacement = res.before
-                for i in range(start, end):
+                for i in range(start, end, jump):
                     replacement += var.replace("$i", str(i)) + " + "
                 replacement = replacement[:-3] + res.after
                 dfile.write(replacement)
             else:
                 dfile.write(line)
-        
+
         sfile.close()
         dfile.close()
-    
+
     def expand_bool(self):
         sfile = open(self.destsum, 'r')
         dfile = open(self.dest, 'w')
 
-        bool_format = Keyword(KEYWORDS['bool']) + '(' + Word(nums)("start") + "," + Word(nums)("end") + ","      + Word(nums)("jump") + ')' + '(' + Regex(r'[^\s\(\)]*')('op') + ')' + '(' + Regex(r'[^\s\(\),]*')("var") + "," + Regex(r'[^\s\(\),]*')("operand") + ')'
+        bool_format = Keyword(KEYWORDS['bool']) + '(' + Word(nums)("start") + "," + Word(nums)("end") + ","      + Word(nums)("jump") + ')' + '(' + Regex(r'[^\s\(\)]*')('op') + ')' + '(' + Regex(r'[^\s\(\),]*')("logical_op") + ')' + '(' + Regex(r'[^\s\(\),]*')("var") + "," + Regex(r'[^\s\(\),]*')("operand") + ')'
         line_bool_format = Regex(r'[^\@]*')("before") + \
             bool_format + Regex(r'[^\@]*')("after")
 
@@ -253,14 +254,15 @@ class p4_code_generator():
                 start = int(res.start)
                 end = int(res.end)
                 jump = int(res.jump)
+                logical_op = res.logical_op
                 var = res.var
                 operand = res.operand
                 op = res.op
 
                 replacement = res.before
                 for i in range(start, end, jump):
-                    replacement +=  "%s %s %s and " % (var.replace("$i", str(i)), op, operand)
-                replacement = replacement[:-5] + res.after
+                    replacement +=  "%s %s %s %s " % (var.replace("$i", str(i)), op, operand, logical_op)
+                replacement = replacement[:-2 - len(logical_op)] + res.after
                 dfile.write(replacement)
             else:
                 dfile.write(line)
@@ -281,10 +283,10 @@ class p4_code_generator():
                 Optional(reads_format) + Regex(r'[^\}\{]*') + close_brac
         sfile_str = sfile.read()
         res = table_format.searchString(sfile_str)
-        
+
         for table in res:
             dfile.write('table_set_default %s %s\n' % (table.table_name, table.default_action))
-        
+
         sfile.close()
         dfile.close()
 
@@ -302,7 +304,7 @@ if __name__ == '__main__':
     num_switches = TOPO_DATA["nb_switches"]
 
     src = sys.argv[1]
-    
+
     filename = src[:-4]
 
     for i in range(1, num_switches + 1):
