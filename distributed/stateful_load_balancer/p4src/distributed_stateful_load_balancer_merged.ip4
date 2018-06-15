@@ -343,7 +343,7 @@ control ingress {
                     apply(drop_table);
                 }
                 else {
-                    @compare (SWITCHES) (<=)
+                    @compare (<=)
                     @for (i) (1,SWITCHES,1)
                         @case meta.switch_flow$i:
                             apply(set_switch$i_dest_port_table);
