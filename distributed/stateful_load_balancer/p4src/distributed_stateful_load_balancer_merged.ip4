@@ -307,7 +307,7 @@ control ingress {
     if (load_balancer_head.preamble == 1){
 
         //Send update (set preamble as 2)
-        @mirror
+        @mirror(load_balancer_head.preamble,2)
             @sum (1, SERVERPLUSONE,1)(meta.server_flow$i)
         @endmirror
         //--->apply(send_update_table);
@@ -363,7 +363,7 @@ control ingress {
         apply(forwarding_table);
 
         if(meta.probe_bool == 1){
-            @sync
+            @sync(load_balancer_head.preamble,1)
             @endsync
             //--->apply(send_probe_table);
         }
@@ -380,7 +380,7 @@ control ingress {
             if ((@sum (1, SERVERS ,1)(meta.server_flow$i))*100 < (meta.lower_limit * SERVERS * THRESHOLD)){
                 if(meta.routing_port == 2 or meta.routing_port == 3){
                     //Send broadcast (set preamble as 2)
-                    @sync
+                    @sync(load_balancer_head.preamble,2)
                         @sum(1, SERVERPLUSONE,1)(meta.server_flow$i)
                     @endsync
                     //--->apply(send_broadcast_update_table);

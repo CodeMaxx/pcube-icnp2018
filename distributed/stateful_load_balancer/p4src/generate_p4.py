@@ -59,7 +59,7 @@ TABLE_STRING = \
 ACTION_START_STRING = \
 "action %s_info%d() {\n\
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);\n\
-    modify_field(load_balancer_head.preamble,2);\n\
+    modify_field(%s,%s);\n\
 "
 
 MODIFY_FIELD = \
@@ -87,6 +87,9 @@ HEADER_END_STRING = \
 
 HEADER = "header sync_info_t sync_info;\n"
 
+APPLY_SYNC_STRING = "%sapply(sync_info%d_table);\n"
+APPLY_MIRROR_STRING = "%sapply(mirror_info%d_table);\n"
+        
 class p4_code_generator():
 
     def __init__(self, switch_id, src, dest, filename):
@@ -343,13 +346,13 @@ class p4_code_generator():
         sfile.close()
         dfile.close()
 
-    def write_sync_action(self, fields, sync_id):
+    def write_sync_action(self, fields, sync_id, field_name, val):
         sfile = open(self.destsync, 'a')
 
         globals()["sync_fields_count"] = max(len(fields), globals()["sync_fields_count"])
         
         sfile.write(TABLE_STRING%("sync",sync_id,"sync",sync_id))
-        sfile.write(ACTION_START_STRING%("sync",sync_id))
+        sfile.write(ACTION_START_STRING%("sync",sync_id,field_name,val))
 
         for i in range(len(fields)):
             sfile.write(MODIFY_FIELD%(i,fields[i]))
@@ -357,13 +360,13 @@ class p4_code_generator():
         sfile.write(SYNC_ACTION_END_STRING%self.constants["MCAST_GRP"])
         sfile.close()
 
-    def write_mirror_action(self, fields, mirror_id):
+    def write_mirror_action(self, fields, mirror_id, field_name, val):
         sfile = open(self.destsync, 'a')
 
         globals()["sync_fields_count"] = max(len(fields), globals()["sync_fields_count"])
 
         sfile.write(TABLE_STRING%("mirror",mirror_id,"mirror",mirror_id))
-        sfile.write(ACTION_START_STRING%("mirror",mirror_id))
+        sfile.write(ACTION_START_STRING%("mirror",mirror_id,field_name,val))
 
         for i in range(len(fields)):
             sfile.write(MODIFY_FIELD%(i,fields[i]))
@@ -375,29 +378,38 @@ class p4_code_generator():
         sfile = open(self.destbool, 'r')
         dfile = open(self.dest, 'w')
 
+        sync_format = Keyword(KEYWORDS['sync']) + '(' + Regex(r'[_a-zA-Z]*')("header_name") + "." + Regex(r'[^\s\(\)]*')("field") + "," + Word(nums)("val") + ')'
+        mirror_format = Keyword(KEYWORDS['mirror']) + '(' + Regex(r'[_a-zA-Z]*')("header_name") + "." + Regex(r'[^\s\(\)]*')("field") + "," + Word(nums)("val") + ')'
+
         active_sync, active_mirror = False, False
-        fields = []
-        apply_sync_string = "%sapply(sync_info%d_table);\n"
-        apply_mirror_string = "%sapply(mirror_info%d_table);\n"
+        fields, field_name, val = [], None, None
+
         for line in sfile:
-            if KEYWORDS['sync'] in line or KEYWORDS['mirror'] in line:
-                active_sync, active_mirror = KEYWORDS['sync'] in line, KEYWORDS['mirror'] in line
-                if active_sync: self.sync_id += 1
-                if active_mirror: self.mirror_id += 1
+            if KEYWORDS['sync'] in line: 
+                res = sync_format.parseString(line)
+                field_name, val = res.header_name + '.' + res.field, res.val
+                active_sync = True
+                self.sync_id += 1
             
+            elif KEYWORDS['mirror'] in line:
+                res = mirror_format.parseString(line)
+                field_name, val = res.header_name + '.' + res.field, res.val
+                active_mirror = True
+                self.mirror_id += 1
+
             elif KEYWORDS['endsync'] in line:
                 active_sync = False
-                self.write_sync_action(fields,self.sync_id)
+                self.write_sync_action(fields,self.sync_id, field_name, val)
                 fields = []
                 indent = line[:-len(line.lstrip())]
-                dfile.write(apply_sync_string%(indent,self.sync_id))
+                dfile.write(APPLY_SYNC_STRING%(indent,self.sync_id))
 
             elif KEYWORDS['endmirror'] in line:
                 active_mirror = False
-                self.write_mirror_action(fields,self.mirror_id)
+                self.write_mirror_action(fields,self.mirror_id, field_name, val)
                 fields = []
                 indent = line[:-len(line.lstrip())]
-                dfile.write(apply_mirror_string%(indent,self.mirror_id))
+                dfile.write(APPLY_MIRROR_STRING%(indent,self.mirror_id))
 
             elif active_sync or active_mirror:
                 fields.append(line.strip())
