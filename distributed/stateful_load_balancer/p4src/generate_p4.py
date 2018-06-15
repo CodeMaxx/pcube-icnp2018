@@ -191,7 +191,7 @@ class p4_code_generator():
                     # Get the lexeme used as iteration variable
                     iter_var = re.search(r'\((.*)\)',tokens[1]).group(1)
                     # 
-                    res = re.search(r'\[(.*),(.*),(.*)\]',tokens[2].rstrip('\n'))
+                    res = re.search(r'\((.*),(.*),(.*)\)',tokens[2].rstrip('\n'))
                     try:
                         start, end, step = int(res.group(1)), int(res.group(2)), int(res.group(3))
                     except:
@@ -290,7 +290,7 @@ class p4_code_generator():
         sfile = open(self.destcmp, 'r')
         dfile = open(self.destsum, 'w')
 
-        sum_format = Keyword(KEYWORDS['sum']) + '(' + Word(nums)("start") + "," + Word(nums)("end") + ')' \
+        sum_format = Keyword(KEYWORDS['sum']) + '(' + Word(nums)("start") + "," + Word(nums)("end") + "," + Word(nums)("jump") + ')' \
                         + '(' + Regex(r'[^\s\(\)]*')("var") + ')'
         line_sum_format = Regex(r'[^\@]*')("before") + sum_format + Regex(r'[^\@]*')("after")
         
@@ -300,10 +300,11 @@ class p4_code_generator():
                 res = line_sum_format.parseString(line)
                 start = int(res.start)
                 end = int(res.end)
+                jump = int(res.jump)
                 var = res.var
 
                 replacement = res.before
-                for i in range(start, end):
+                for i in range(start, end,jump):
                     replacement += var.replace("$i", str(i)) + " + "
                 replacement = replacement[:-3] + res.after
 
@@ -320,7 +321,7 @@ class p4_code_generator():
         sfile = open(self.destsum, 'r')
         dfile = open(self.destbool, 'w')
 
-        bool_format = Keyword(KEYWORDS['bool']) + '(' + Word(nums)("start") + "," + Word(nums)("end") + ","      + Word(nums)("jump") + ')' + '(' + Regex(r'[^\s\(\)]*')('op') + ')' + '(' + Regex(r'[^\s\(\),]*')("var") + "," + Regex(r'[^\s\(\),]*')("operand") + ')'
+        bool_format = Keyword(KEYWORDS['bool']) + '(' + Word(nums)("start") + "," + Word(nums)("end") + ","      + Word(nums)("jump") + ')' + '(' + Regex(r'[^\s\(\)]*')('op') + ')' + '(' + Regex(r'[^\s\(\),]*')("logical_op") + ')' + '(' + Regex(r'[^\s\(\),]*')("var") + "," + Regex(r'[^\s\(\),]*')("operand") + ')'
         line_bool_format = Regex(r'[^\@]*')("before") + \
             bool_format + Regex(r'[^\@]*')("after")
 
@@ -331,14 +332,15 @@ class p4_code_generator():
                 start = int(res.start)
                 end = int(res.end)
                 jump = int(res.jump)
+                logical_op = res.logical_op
                 var = res.var
                 operand = res.operand
                 op = res.op
 
                 replacement = res.before
                 for i in range(start, end+1, jump):
-                    replacement +=  "%s %s %s and " % (var.replace("$i", str(i)), op, operand)
-                replacement = replacement[:-5] + res.after
+                    replacement +=  "%s %s %s %s " % (var.replace("$i", str(i)), op, operand, logical_op)
+                replacement = replacement[:-2 - len(logical_op)] + res.after
                 dfile.write(replacement)
             else:
                 dfile.write(line)

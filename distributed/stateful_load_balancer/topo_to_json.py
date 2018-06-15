@@ -69,7 +69,6 @@ def read_topo():
                 topo_stats[b] = {"SERVERS": 1, "SWITCHES": 0}
 
     json_data["topo_stats"] = topo_stats
-
     return json_data
 
 data = read_topo()
