@@ -14,9 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+###--- Remove stale json
+for j in `seq 1 $2`
+do
+	rm p4src/distributed_stateful_load_balancer_$1_s$j.json
+done
 
 ###--- Setup Environment
-rm distributed_stateful_load_balancer_$1.json
 sudo rm -f *.pcap
 sudo mn -c
 THIS_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -36,11 +40,11 @@ CLI_PATH=$BMV2_PATH/tools/modified_runtime_CLI.py
 python topo_to_json.py
 
 ###--- Generate p4 for all switches from ip4
-python3 generate_p4.py distributed_stateful_load_balancer_merged.ip4
+python3 p4src/generate_p4.py p4src/distributed_stateful_load_balancer_merged.ip4
 
 ###--- Generate commands for sending packets to lowest load server
 # 5 is Threshold here
-python generate_commands.py merged 5
+python generate_commands.py $1 5
 
 ###--- Generate sync_commands.txt
 python generate_sync_commands.py
@@ -51,12 +55,12 @@ python generate_sync_commands.py
 ###--- Compile p4 for all switches
 for j in `seq 1 $2`
 do
-    $P4C_BM_SCRIPT p4src/distributed_stateful_load_balancer_$1_$j.p4 --json distributed_stateful_load_balancer_$1_$j.json
+    $P4C_BM_SCRIPT p4src/distributed_stateful_load_balancer_$1_s$j.p4 --json p4src/distributed_stateful_load_balancer_$1_s$j.json
     sudo $SWITCH_PATH >/dev/null 2>&1
 done
 
 ###--- Burn json for each switch individually using topo.py
 sudo PYTHONPATH=$PYTHONPATH:$BMV2_PATH/mininet/ python topo.py \
     --behavioral-exe $SWITCH_PATH \
-    --json distributed_stateful_load_balancer_$1 \
+    --json p4src/distributed_stateful_load_balancer_$1 \
     --cli $CLI_PATH

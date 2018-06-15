@@ -48,10 +48,9 @@ class MyTopo(Topo):
 		Topo.__init__(self, **opts)
 
 		for i in xrange(nb_switches):
-			print(json_path)
 			switch = self.addSwitch('s%d' % (i + 1),
 									sw_path = sw_path,
-									json_path = json_path,
+									json_path = json_path+"_s%d.p4"%(i+1),
 									thrift_port = _THRIFT_BASE_PORT + i,
 									pcap_dump = True,
 									device_id = i)

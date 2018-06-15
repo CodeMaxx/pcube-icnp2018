@@ -19,9 +19,10 @@
 #define SERVERPLUSONE 3
 #define SWITCHES 12
 #define SWITCHMINUSONE 11
+#define SWITCHPLUSSERVER 14
 #define MCAST_GRP 1
 #define THRESHOLD 99
-#define SQTHRESHOLD 10000
+#define SQTHRESH 10000
 
 // -------------------- Headers ------------------------
 
@@ -37,14 +38,8 @@ header_type load_balancer_t {
         _count : 32;
     }
 }
-header load_balancer_t load_balancer_head;
 
-header_type sync_info_t {
-    fields {
-        flow_num: 32;
-    }
-}
-header sync_info_t sync_info_head;
+header load_balancer_t load_balancer_head;
 
 header_type meta_t {
     fields {
@@ -105,13 +100,13 @@ parser start {
 
 parser parse_head {
     extract(load_balancer_head);
-    extract(sync_info_head);
+    extract(sync_info);
     return ingress;
 }
 
 parser interswitch {
     extract(load_balancer_head);
-    extract(sync_info_head);
+    extract(sync_info);
     return ingress;
 }
 
@@ -119,7 +114,7 @@ parser interswitch {
 
 register total_flow_count_register {
     width: 32;
-    instance_count: SERVERS + SWITCHES;
+    instance_count: SWITCHPLUSSERVER;
 }
 
 register flow_to_port_map_register {
@@ -143,22 +138,6 @@ table get_server_flow_count_table{
     size:1;
 }
 
-@for (i) [1,SERVERPLUSONE,1]
-    table update_min_flow_len$i_table1 {
-        actions{
-            update_min_flow_len$i;
-        }
-        size: 1;
-    }
-@endfor
-
-table send_update_table {
-    actions{
-        send_update;
-    }
-    size: 1;
-}
-
 table update_switch_flow_count_table {
     actions{
         update_switch_flow_count;
@@ -175,7 +154,7 @@ table set_server_dest_port_table{
     actions{
         set_server_dest_port;
     }
-    size:SQTHRESHOLD;
+    size:SQTHRESH;
 }
 
 table set_probe_bool_table {
@@ -226,13 +205,6 @@ table drop_table {
     size: 1;
 }
 
-table send_probe_table {
-    actions{
-        send_probe;
-    }
-    size: 1;
-}
-
 table clear_map_table {
     actions {
         clear_map;
@@ -243,22 +215,6 @@ table clear_map_table {
 table update_flow_count_table {
     actions{
         update_flow_count;
-    }
-    size: 1;
-}
-
-@for (i) [1,SERVERPLUSONE,1]
-    table update_min_flow_len$i_table2 {
-        actions{
-            update_min_flow_len$i;
-        }
-        size: 1;
-    }
-@endfor
-
-table send_broadcast_update_table {
-    actions{
-        send_broadcast_update;
     }
     size: 1;
 }
@@ -277,21 +233,8 @@ action get_server_flow_count(){
     @endfor
 }
 
-@for (i) [1,SERVERPLUSONE,1]
-    action update_min_flow_len$i(){
-        modify_field(meta.min_flow_len, meta.server_flow$i);
-    }
-@endfor
-
-//--->Will be generated as _mirror_1() in a separate file
-action send_update(){
-    modify_field(load_balancer_head.preamble,2);
-    modify_field(sync_info_head.flow_num,(@sum (1, SERVERPLUSONE)(meta.server_flow$i));
-    modify_field(standard_metadata.egress_spec, standard_metadata.ingress_port);
-}
-
 action update_switch_flow_count() {
-    register_write(total_flow_count_register,standard_metadata.ingress_port - 2, sync_info_head.flow_num);
+    register_write(total_flow_count_register,standard_metadata.ingress_port - 2, sync_info._0);
 }
 
 action set_server_dest_port(flow_count,flow_dest){
@@ -336,13 +279,6 @@ field_list meta_list {
     intrinsic_metadata;
 }
 
-//--->Will be generated as _sync_1() in a separate file
-action send_probe(){
-    clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
-    modify_field(load_balancer_head.preamble, 1);
-    modify_field(intrinsic_metadata.mcast_grp, 1);
-}
-
 action clear_map() {
     modify_field_with_hash_based_offset(meta.hash, 0,
                                         flow_register_index, 65536);
@@ -353,14 +289,6 @@ action update_flow_count() {
     register_read(meta.temp, total_flow_count_register, meta.routing_port-2);
     add_to_field(meta.temp,-1);
     register_write(total_flow_count_register,meta.routing_port-2, meta.temp);
-}
-
-//--->Will be generated as _sync_2() in a separate file
-action send_broadcast_update(){
-    clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);
-    modify_field(load_balancer_head.preamble,2);
-    modify_field(sync_info_head.flow_num,(@sum (1, SERVERPLUSONE)(meta.server_flow$i));
-    modify_field(intrinsic_metadata.mcast_grp, MCAST_GRP);
 }
 
 action _drop() {
@@ -415,7 +343,7 @@ control ingress {
                     apply(drop_table);
                 }
                 else {
-                    @compare (SWITCHMINUSONE) (<=)
+                    @compare (SWITCHES) (<=)
                     @for (i) [1,SWITCHES,1]
                         @case meta.switch_flow$i:
                             apply(set_switch$i_dest_port_table);
@@ -434,13 +362,8 @@ control ingress {
         //Forwarding
         apply(forwarding_table);
 
-        if (meta.routing_port == 0){
-            apply(drop_table);
-        }
-
         if(meta.probe_bool == 1){
             @sync
-                @sum(1, SERVERPLUSONE)(meta.server_flow$i)
             @endsync
             //--->apply(send_probe_table);
         }
