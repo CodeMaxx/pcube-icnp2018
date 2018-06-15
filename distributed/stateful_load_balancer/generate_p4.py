@@ -32,13 +32,13 @@ import fileinput
 # and also prevent hardcoding of tokens in the code
 
 KEYWORDS = {
-    'for'		:	'@for',
-    'endfor'	:	'@endfor',
-    'compare'	:	'@compare',
-    'endcompare':	'@endcompare',
-    'case'		:	'@case',
-    'endcase'	:	'@endcase',
-    'sum'		:	'@sum',
+    'for'       :   '@for',
+    'endfor'    :   '@endfor',
+    'compare'   :   '@compare',
+    'endcompare':   '@endcompare',
+    'case'      :   '@case',
+    'endcase'   :   '@endcase',
+    'sum'       :   '@sum',
     'bool'      :   '@bool'
 }
 
@@ -173,8 +173,7 @@ class p4_code_generator():
         sfile = open(self.destfor, 'r')
         dfile = open(self.destcmp, 'w')
 
-        compare_format = Keyword(KEYWORDS['compare']) + '(' + Word(nums)("num") + \
-                ')' + '(' + Regex(r'[^\s\(\)]*')('op') + ')'
+        compare_format = Keyword(KEYWORDS['compare']) + '(' + Regex(r'[^\s\(\)]*')('op') + ')'
         case_var_format = Word(alphas+"_", alphanums+"_"+".")('var')
         case_format = Keyword(KEYWORDS['case']) + case_var_format + ":"
 
@@ -182,28 +181,30 @@ class p4_code_generator():
             if KEYWORDS['compare'] in line:
                 # import pdb; pdb.set_trace()
                 res = compare_format.parseString(line)
-                num = int(res.num)
+                # num = int(res.num)
                 op = res.op
                 varlist = OrderedDict()
-                while num:
+                # l = sfile.readline()
+                while True:
                     l = sfile.readline()
                     # import pdb; pdb.set_trace()
-                    res = case_format.parseString(l)
-                    var = res.var
-                    varlist[var] = ''
-                    lcase = sfile.readline()
-                    content = ''
-                    while KEYWORDS['endcase'] not in lcase:
-                        content += lcase
+                    if KEYWORDS['endcompare'] in l:
+                        break
+                    elif KEYWORDS['case'] in l:
+                        # import pdb; pdb.set_trace()
+                        res = case_format.parseString(l)
+                        var = res.var
+                        varlist[var] = ''
                         lcase = sfile.readline()
-                    varlist[var] = content
-                    num -= 1
-                    # except:
-                    # 	# import pdb; pdb.set_trace()
-                    # 	l = sfile.readline()
-                lcompare = sfile.readline()
-                while KEYWORDS['endcompare'] not in lcompare:
-                    lcompare = sfile.readline()
+                        content = ''
+                        while KEYWORDS['endcase'] not in lcase:
+                            content += lcase
+                            lcase = sfile.readline()
+                        varlist[var] = content
+                        # num -= 1
+                        # except:
+                        #   # import pdb; pdb.set_trace()
+                        #   l = sfile.readline()
                 self.roll_out_compare(varlist, op, dfile)
             else:
                 dfile.write(line)
