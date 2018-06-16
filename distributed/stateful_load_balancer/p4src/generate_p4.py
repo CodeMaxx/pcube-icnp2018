@@ -378,8 +378,8 @@ class p4_code_generator():
         sfile = open(self.destbool, 'r')
         dfile = open(self.dest, 'w')
 
-        sync_format = Keyword(KEYWORDS['sync']) + '(' + Regex(r'[_a-zA-Z]*')("header_name") + "." + Regex(r'[^\s\(\)]*')("field") + "," + Word(nums)("val") + ')'
-        mirror_format = Keyword(KEYWORDS['mirror']) + '(' + Regex(r'[_a-zA-Z]*')("header_name") + "." + Regex(r'[^\s\(\)]*')("field") + "," + Word(nums)("val") + ')'
+        sync_format = Keyword(KEYWORDS['sync']) + '(' + Regex(r'[_a-zA-Z]*')("header_name") + "." + Regex(r'[_a-zA-Z]*')("field") + "," + Word(nums)("val") + ')'
+        mirror_format = Keyword(KEYWORDS['mirror']) + '(' + Regex(r'[_a-zA-Z]*')("header_name") + "." + Regex(r'[_a-zA-Z]*')("field") + "," + Word(nums)("val") + ')'
 
         active_sync, active_mirror = False, False
         fields, field_name, val = [], None, None
