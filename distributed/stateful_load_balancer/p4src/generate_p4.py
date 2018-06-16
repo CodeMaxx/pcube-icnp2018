@@ -89,7 +89,7 @@ HEADER = "header sync_info_t sync_info;\n"
 
 APPLY_SYNC_STRING = "%sapply(sync_info%d_table);\n"
 APPLY_MIRROR_STRING = "%sapply(mirror_info%d_table);\n"
-        
+
 class p4_code_generator():
 
     def __init__(self, switch_id, src, dest, filename):
@@ -104,9 +104,9 @@ class p4_code_generator():
         self.sync_header = filename + "_sync_header.p4"
         self.dest = dest
         self.tempfiles = [
-            self.destfor, 
-            self.destfor + ".bak", 
-            self.destcmp, 
+            self.destfor,
+            self.destfor + ".bak",
+            self.destcmp,
             self.destsum,
             self.destbool
         ]
@@ -117,7 +117,7 @@ class p4_code_generator():
 
         self.sync_id = 0
         self.mirror_id = 0
-    
+
     def expand(self):
         os.system('rm -f %s' % self.destsync)
         self.expand_for()
@@ -155,7 +155,7 @@ class p4_code_generator():
 
         sfile = open(self.src,'r')
         dfile = open(self.destfor,'w')
-        
+
         # Can read in any #define constant and replaces them if present as a parameter for `for` loop
         # For e.g. Number of servers
 
@@ -166,7 +166,7 @@ class p4_code_generator():
                 dfile.write("#include \"%s\"\n"%self.sync_header.split('/')[1])
                 dfile.write("#include \"%s\"\n"%self.destsync.split('/')[1])
                 header_included = True
-            
+
             if '#define' in row:
                 _, var_name, val = row.split()
                 define_string = "#define %s %d\n"
@@ -193,7 +193,7 @@ class p4_code_generator():
                     tokens = row.split()
                     # Get the lexeme used as iteration variable
                     iter_var = re.search(r'\((.*)\)',tokens[1]).group(1)
-                    # 
+                    #
                     res = re.search(r'\((.*),(.*),(.*)\)',tokens[2].rstrip('\n'))
                     try:
                         start, end, step = int(res.group(1)), int(res.group(2)), int(res.group(3))
@@ -244,7 +244,7 @@ class p4_code_generator():
                     final += '%sif(%s) {\n%s\n%s}\n' % (spaces, cond, varlist[i].rstrip('\n'), spaces)
                 else:
                     final += '%selse if(%s) {\n%s\n%s}\n' % (spaces, cond, varlist[i].rstrip('\n'), spaces)
-        
+
         dfile.write(final)
 
     def expand_compare(self):
@@ -280,7 +280,7 @@ class p4_code_generator():
                 self.roll_out_compare(varlist, op, dfile)
             else:
                 dfile.write(line)
-            
+
         sfile.close()
         dfile.close()
 
@@ -291,7 +291,7 @@ class p4_code_generator():
         sum_format = Keyword(KEYWORDS['sum']) + '(' + Word(nums)("start") + "," + Word(nums)("end") + "," + Word(nums)("jump") + ')' \
                         + '(' + Regex(r'[^\s\(\)]*')("var") + ')'
         line_sum_format = Regex(r'[^\@]*')("before") + sum_format + Regex(r'[^\@]*')("after")
-        
+
         for line in sfile:
             if KEYWORDS['sum'] in line:
                 # import pdb; pdb.set_trace()
@@ -311,10 +311,10 @@ class p4_code_generator():
                 dfile.write(replacement)
             else:
                 dfile.write(line)
-        
+
         sfile.close()
         dfile.close()
-    
+
     def expand_bool(self):
         sfile = open(self.destsum, 'r')
         dfile = open(self.destbool, 'w')
@@ -350,13 +350,13 @@ class p4_code_generator():
         sfile = open(self.destsync, 'a')
 
         globals()["sync_fields_count"] = max(len(fields), globals()["sync_fields_count"])
-        
+
         sfile.write(TABLE_STRING%("sync",sync_id,"sync",sync_id))
         sfile.write(ACTION_START_STRING%("sync",sync_id,field_name,val))
 
         for i in range(len(fields)):
             sfile.write(MODIFY_FIELD%(i,fields[i]))
-        
+
         sfile.write(SYNC_ACTION_END_STRING%self.constants["MCAST_GRP"])
         sfile.close()
 
@@ -370,7 +370,7 @@ class p4_code_generator():
 
         for i in range(len(fields)):
             sfile.write(MODIFY_FIELD%(i,fields[i]))
-        
+
         sfile.write(MIRROR_ACTION_END_STRING)
         sfile.close()
 
@@ -378,19 +378,19 @@ class p4_code_generator():
         sfile = open(self.destbool, 'r')
         dfile = open(self.dest, 'w')
 
-        sync_format = Keyword(KEYWORDS['sync']) + '(' + Regex(r'[_a-zA-Z]*')("header_name") + "." + Regex(r'[_a-zA-Z]*')("field") + "," + Word(nums)("val") + ')'
-        mirror_format = Keyword(KEYWORDS['mirror']) + '(' + Regex(r'[_a-zA-Z]*')("header_name") + "." + Regex(r'[_a-zA-Z]*')("field") + "," + Word(nums)("val") + ')'
+        sync_format = Keyword(KEYWORDS['sync']) + '(' + Regex(r'[_a-zA-Z]*')("header_name") + "." + Regex(r'[^\s\(\),]*')("field") + "," + Word(nums)("val") + ')'
+        mirror_format = Keyword(KEYWORDS['mirror']) + '(' + Regex(r'[_a-zA-Z]*')("header_name") + "." + Regex(r'[^\s\(\),]*')("field") + "," + Word(nums)("val") + ')'
 
         active_sync, active_mirror = False, False
         fields, field_name, val = [], None, None
 
         for line in sfile:
-            if KEYWORDS['sync'] in line: 
+            if KEYWORDS['sync'] in line:
                 res = sync_format.parseString(line)
                 field_name, val = res.header_name + '.' + res.field, res.val
                 active_sync = True
                 self.sync_id += 1
-            
+
             elif KEYWORDS['mirror'] in line:
                 res = mirror_format.parseString(line)
                 field_name, val = res.header_name + '.' + res.field, res.val
@@ -432,10 +432,10 @@ class p4_code_generator():
                 Optional(reads_format) + Regex(r'[^\}\{]*') + close_brac
         sfile_str = sfile.read()
         res = table_format.searchString(sfile_str)
-        
+
         for table in res:
             dfile.write('table_set_default %s %s\n' % (table.table_name, table.default_action))
-        
+
         sfile.close()
         dfile.close()
 
@@ -464,7 +464,7 @@ if __name__ == '__main__':
     num_switches = TOPO_DATA["nb_switches"]
 
     src = sys.argv[1]
-    
+
     filename = src[:-4]
 
     globals()["sync_fields_count"] = 0
