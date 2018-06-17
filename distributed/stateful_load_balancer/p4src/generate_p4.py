@@ -181,6 +181,8 @@ class p4_code_generator():
                         val = self.constants["SWITCHES"] - 1
                     elif var_name == "SWITCHPLUSSERVER":
                         val = self.constants["SERVERS"] + self.constants["SWITCHES"]
+                    elif var_name == "SERVERMINUSONE":
+                        val = self.constants["SERVERS"] - 1
 
                 self.constants[var_name] = int(val)
                 # dfile.write(define_string%(var_name,int(val)))
@@ -436,6 +438,9 @@ class p4_code_generator():
         for table in res:
             dfile.write('table_set_default %s %s\n' % (table.table_name, table.default_action))
         
+        #Hardcoded limits temporarily
+        dfile.write('table_add get_limits_table get_limits => 20 80\n')
+
         sfile.close()
         dfile.close()
 

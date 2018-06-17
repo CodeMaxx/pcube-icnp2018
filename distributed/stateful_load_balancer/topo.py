@@ -50,7 +50,7 @@ class MyTopo(Topo):
 		for i in xrange(nb_switches):
 			switch = self.addSwitch('s%d' % (i + 1),
 									sw_path = sw_path,
-									json_path = json_path+"_s%d.p4"%(i+1),
+									json_path = json_path+"_s%d.json"%(i+1),
 									thrift_port = _THRIFT_BASE_PORT + i,
 									pcap_dump = True,
 									device_id = i)
@@ -65,10 +65,13 @@ def main():
 
 	topo_data = get_topo_data()
 
+	nb_hosts = topo_data["nb_hosts"]
+	nb_switches = topo_data["nb_switches"]
+
 	topo = MyTopo(args.behavioral_exe,
 				  args.json,
-				  topo_data["nb_hosts"], 
-				  topo_data["nb_switches"], 
+				  nb_hosts, 
+				  nb_switches, 
 				  get_links(topo_data["links"]))
 
 	net = Mininet(topo = topo,
@@ -93,7 +96,7 @@ def main():
 	sleep(1)
 
 	for i in xrange(nb_switches):
-		cmd = [args.cli, "--json", args.json + "_" + str(i + 1) + ".json" ,
+		cmd = [args.cli, "--json", args.json + "_s" + str(i + 1) + ".json" ,
 			   "--thrift-port", str(_THRIFT_BASE_PORT + i)]
 
 		with open("commands_s%d.txt"%( i+1 ), "r") as f:

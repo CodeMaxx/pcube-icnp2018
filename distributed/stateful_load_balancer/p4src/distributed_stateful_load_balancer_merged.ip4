@@ -16,6 +16,7 @@
 // ------------------ Constants --------------------
 
 #define SERVERS 2
+#define SERVERMINUSONE 1
 #define SERVERPLUSONE 3
 #define SWITCHES 12
 #define SWITCHMINUSONE 11
@@ -147,7 +148,7 @@ table update_switch_flow_count_table {
 
 table set_server_dest_port_table{
     reads{
-        @for (i) (1,SERVERPLUSONE,1)
+        @for (i) (1,SERVERMINUSONE,1)
             meta.server_flow$i : exact;
         @endfor
     }

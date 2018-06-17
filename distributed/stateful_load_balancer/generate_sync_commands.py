@@ -8,13 +8,13 @@ MIRRORING_ADD = "mirroring_add %d %d\n"
 def generate_sync_commands(topo_stats):
 	mgrp_no = 1
 	
-	node_no = 1
 
 	#Need to sort keys to keep a one to one mapping for switch number to mcast group
 	keylist = topo_stats.keys()
 	keylist.sort()
 
 	for key in keylist:
+		node_no = 0
 		f = open("sync_commands_%s.txt"%key, "w")
 		stat = topo_stats[key]
 		num_hosts = stat["SERVERS"]

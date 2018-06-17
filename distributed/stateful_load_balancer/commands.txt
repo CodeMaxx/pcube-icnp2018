@@ -1,3 +1,15 @@
+mc_mgrp_create 1 
+mc_node_create 0 4
+mc_node_create 1 5
+mc_node_create 2 6
+mc_node_associate 1 0
+mc_node_associate 1 1
+mc_node_associate 1 2
+mirroring_add 2 2
+mirroring_add 3 3
+mirroring_add 4 4
+mirroring_add 5 5
+mirroring_add 6 6
 table_set_default get_server_flow_count_table get_server_flow_count
 table_set_default update_min_flow_len1_table1 update_min_flow_len1
 table_set_default update_min_flow_len2_table1 update_min_flow_len2
