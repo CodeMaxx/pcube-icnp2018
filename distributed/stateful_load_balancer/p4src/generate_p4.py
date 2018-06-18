@@ -32,18 +32,18 @@ import fileinput
 # and also prevent hardcoding of tokens in the code
 
 KEYWORDS = {
-    'for'		:	'@for',
-    'endfor'	:	'@endfor',
-    'compare'	:	'@compare',
-    'endcompare':	'@endcompare',
-    'case'		:	'@case',
-    'endcase'	:	'@endcase',
-    'sum'		:	'@sum',
-    'bool'      :   '@bool',
-    'sync'      :   '@sync',
-    'endsync'   :   '@endsync',
-    'mirror'    :   '@mirror',
-    'endmirror' :   '@endmirror',
+    'for'		:	'@pcube_for',
+    'endfor'	:	'@pcube_endfor',
+    'compare'	:	'@pcube_minmax',
+    'endcompare':	'@pcube_endminmax',
+    'case'		:	'@pcube_case',
+    'endcase'	:	'@pcube_endcase',
+    'sum'		:	'@pcube_sum',
+    'bool'      :   '@pcube_cmp',
+    'sync'      :   '@pcube_sync',
+    'endsync'   :   '@pcube_endsync',
+    'mirror'    :   '@pcube_echo',
+    'endmirror' :   '@pcube_endecho',
 }
 
 TOPO_DATA = None
