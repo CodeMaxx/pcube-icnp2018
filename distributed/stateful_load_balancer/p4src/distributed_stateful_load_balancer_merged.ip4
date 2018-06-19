@@ -20,10 +20,11 @@
 #define SERVERPLUSONE 3
 #define SWITCHES 12
 #define SWITCHMINUSONE 11
+#define SWITCHPLUSONE 13
 #define SWITCHPLUSSERVER 14
 #define MCAST_GRP 1
-#define THRESHOLD 99
-#define SQTHRESH 10000
+#define THRESHOLD 4
+#define SQTHRESH 25
 
 // -------------------- Headers ------------------------
 
@@ -39,25 +40,22 @@ header_type load_balancer_t {
         _count : 32;
     }
 }
-
 header load_balancer_t load_balancer_head;
 
 header_type meta_t {
     fields {
         temp : 32;
 
-        @pcube_for (i) (1,SERVERPLUSONE,1)
+        @pcube_for (i) (1,SERVERS,1)
             server_flow$i : 32;
         @pcube_endfor
 
-        @pcube_for (i) (1,SWITCHES,1)
+        @pcube_for (i) (1,SWITCHPLUSONE,1)
             switch_flow$i : 32;
         @pcube_endfor
 
         hash: 16;
         routing_port: 32;
-
-        min_flow_len : 32;
 
         probe_bool : 32;
 
@@ -94,18 +92,13 @@ field_list_calculation flow_register_index {
 parser start {
     return select(current(0, 64)) {
         0: parse_head;
-        1: interswitch;
+        1: parse_head;
+        2: parse_head;
         default: ingress;
     }
 }
 
 parser parse_head {
-    extract(load_balancer_head);
-    extract(sync_info);
-    return ingress;
-}
-
-parser interswitch {
     extract(load_balancer_head);
     extract(sync_info);
     return ingress;
@@ -148,7 +141,7 @@ table update_switch_flow_count_table {
 
 table set_server_dest_port_table{
     reads{
-        @pcube_for (i) (1,SERVERMINUSONE,1)
+        @pcube_for (i) (1,SERVERS,1)
             meta.server_flow$i : exact;
         @pcube_endfor
     }
@@ -172,7 +165,7 @@ table get_switch_flow_count_table{
     size:1;
 }
 
-@pcube_for (i) (1,SWITCHES,1)
+@pcube_for (i) (1,SWITCHPLUSONE,1)
     table set_switch$i_dest_port_table{
         actions{
             set_switch$i_dest_port;
@@ -229,49 +222,47 @@ action get_limits(upper_limit, lower_limit){
 
 action get_server_flow_count(){
 
-    @pcube_for (i) (1,SERVERPLUSONE,1)
-        register_read(meta.server_flow$i,total_flow_count_register,$i - 1);
+    @pcube_for (i) (1,SERVERS,1)
+        register_read(meta.server_flow$i, total_flow_count_register, $i - 1);
     @pcube_endfor
 }
 
 action update_switch_flow_count() {
-    register_write(total_flow_count_register,standard_metadata.ingress_port - 2, sync_info._0);
+    register_write(total_flow_count_register, standard_metadata.ingress_port - 2, sync_info._0);
 }
 
 action set_server_dest_port(flow_count,flow_dest){
-    register_write(total_flow_count_register,flow_dest - 2, flow_count + 1);
-    modify_field(standard_metadata.egress_spec,flow_dest);
+    register_write(total_flow_count_register, flow_dest - 2, flow_count + 1);
+    modify_field(standard_metadata.egress_spec, flow_dest);
 }
 
 action set_probe_bool(){
-    modify_field(meta.probe_bool,1);
+    modify_field(meta.probe_bool, 1);
 }
 
 action get_switch_flow_count(){
-    @pcube_for (i) (1,SWITCHES,1)
-        register_read(meta.switch_flow$i,total_flow_count_register,$i + SWITCHES - 1);
+    @pcube_for (i) (1,SWITCHPLUSONE,1)
+        register_read(meta.switch_flow$i, total_flow_count_register, $i + SERVERS - 2);
     @pcube_endfor
 }
 
-@pcube_for (i) (1,SWITCHES,1)
+@pcube_for (i) (1,SWITCHPLUSONE,1)
     action set_switch$i_dest_port(){
-        register_write(total_flow_count_register,$i + SWITCHES - 1, meta.switch_flow$i + 1);
-        modify_field(standard_metadata.egress_spec,$i + SWITCHES + 1);
+        register_write(total_flow_count_register, $i + SERVERS - 2, meta.switch_flow$i + 1);
+        modify_field(standard_metadata.egress_spec, $i + SERVERS);
     }
 @pcube_endfor
 
 action update_map() {
-    modify_field_with_hash_based_offset(meta.hash, 0,
-                                        flow_register_index, 65536);
+    modify_field_with_hash_based_offset(meta.hash, 0, flow_register_index, 65536);
     register_write(flow_to_port_map_register, meta.hash, standard_metadata.egress_spec);
 }
 
 action forward() {
-    modify_field_with_hash_based_offset(meta.hash, 0,
-                                        flow_register_index, 65536);
+    modify_field_with_hash_based_offset(meta.hash, 0, flow_register_index, 65536);
     register_read(meta.routing_port, flow_to_port_map_register, meta.hash);
     modify_field(standard_metadata.egress_spec, meta.routing_port);
-    modify_field(load_balancer_head.hash,meta.hash);
+    modify_field(load_balancer_head.hash, meta.hash);
 }
 
 field_list meta_list {
@@ -281,15 +272,14 @@ field_list meta_list {
 }
 
 action clear_map() {
-    modify_field_with_hash_based_offset(meta.hash, 0,
-                                        flow_register_index, 65536);
+    modify_field_with_hash_based_offset(meta.hash, 0, flow_register_index, 65536);
     register_write(flow_to_port_map_register, meta.hash, 0);
 }
 
 action update_flow_count() {
     register_read(meta.temp, total_flow_count_register, meta.routing_port-2);
-    add_to_field(meta.temp,-1);
-    register_write(total_flow_count_register,meta.routing_port-2, meta.temp);
+    add_to_field(meta.temp, -1);
+    register_write(total_flow_count_register, meta.routing_port-2, meta.temp);
 }
 
 action _drop() {
@@ -301,7 +291,9 @@ action _drop() {
 control ingress {
 
     //Get threshold from table instead of hardcoding
-    apply(get_limits_table);    
+    apply(get_limits_table);  
+
+    //Get server flow counts from the table  
     apply(get_server_flow_count_table); 
 
     //Preamble 1 => Probe packet 
@@ -309,15 +301,16 @@ control ingress {
 
         //Send update (set preamble as 2)
         @pcube_echo(load_balancer_head.preamble,2)
-            @pcube_sum (1, SERVERPLUSONE,1)(meta.server_flow$i)
+            @pcube_sum (1, SERVERS, 1) (meta.server_flow$i)
         @pcube_endecho
-        //--->apply(send_update_table);
     }
+
     //Preamble 2 => Update packet
     else if (load_balancer_head.preamble == 2){
         //update the registers
         apply(update_switch_flow_count_table);
     }
+
     //Default Preamble is 0
     else {
 
@@ -326,26 +319,31 @@ control ingress {
         if(load_balancer_head.syn == 1) {
 
             //forwarding to own server
-            if(@pcube_cmp (1,SERVERPLUSONE,1)(<)(or)(meta.server_flow$i, THRESHOLD)){
+            if(@pcube_cmp (1,SERVERS,1)(<)(or)(meta.server_flow$i, THRESHOLD)){
+                
                 //forwarding can be done locally
                 apply(set_server_dest_port_table);
 
                 //Take decision to send probe packet or not (Reactive)
-                if ((@pcube_sum (1, SERVERPLUSONE,1)(meta.server_flow$i))*100 > (meta.upper_limit * SERVERS * THRESHOLD)){
+                if ((@pcube_sum (1, SERVERS,1)(meta.server_flow$i))*100 > (meta.upper_limit * SERVERS * THRESHOLD)){
                     apply(set_probe_bool_table);
                 }
             }
+            
             //forwarding to another switch
             else{
                 //Choose from switches
                 apply(get_switch_flow_count_table);
 
-                if (@pcube_cmp (1,SWITCHES,1)(>=)(and)(meta.switch_flow$i, 2*THRESHOLD)){
+                //all switches reach threshold
+                if (@pcube_cmp (1,SWITCHPLUSONE,1)(>=)(and)(meta.switch_flow$i, 2*THRESHOLD)){
                     apply(drop_table);
                 }
+
+                //choose the switch handling least number of flows
                 else {
                     @pcube_minmax (<=)
-                    @pcube_for (i) (1,SWITCHES,1)
+                    @pcube_for (i) (1,SWITCHPLUSONE,1)
                         @pcube_case meta.switch_flow$i:
                             apply(set_switch$i_dest_port_table);
                         @pcube_endcase
@@ -366,7 +364,6 @@ control ingress {
         if(meta.probe_bool == 1){
             @pcube_sync(load_balancer_head.preamble,1)
             @pcube_endsync
-            //--->apply(send_probe_table);
         }
 
         //-------------------------------------------------------------------------
@@ -380,11 +377,11 @@ control ingress {
             //Take decision to send probe packet or not (Proactive)
             if ((@pcube_sum (1, SERVERS ,1)(meta.server_flow$i))*100 < (meta.lower_limit * SERVERS * THRESHOLD)){
                 if(meta.routing_port == 2 or meta.routing_port == 3){
+
                     //Send broadcast (set preamble as 2)
                     @pcube_sync(load_balancer_head.preamble,2)
-                        @pcube_sum(1, SERVERPLUSONE,1)(meta.server_flow$i)
+                        @pcube_sum(1, SERVERS, 1)(meta.server_flow$i)
                     @pcube_endsync
-                    //--->apply(send_broadcast_update_table);
                 }
             }
         }

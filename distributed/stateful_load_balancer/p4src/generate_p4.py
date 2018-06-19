@@ -56,9 +56,13 @@ TABLE_STRING = \
     size: 1;\n\
 }\n\n"
 
-ACTION_START_STRING = \
+SYNC_ACTION_START_STRING = \
 "action %s_info%d() {\n\
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);\n\
+    modify_field(%s,%s);\n\
+"
+MIRROR_ACTION_START_STRING = \
+"action %s_info%d() {\n\
     modify_field(%s,%s);\n\
 "
 
@@ -135,7 +139,7 @@ class p4_code_generator():
         # For replacing all occurances of the loop variable in the code.
         replacement = '$%s' % iter_var
 
-        for i in range(start,end+1,step):
+        for i in range(start,end,step):
             dfile.write(content.replace(replacement,str(i)))
 
     # Recognises all for loops present in the code along with their parameters
@@ -177,12 +181,14 @@ class p4_code_generator():
                 else:
                     if var_name == "SERVERPLUSONE":
                         val = self.constants["SERVERS"] + 1
+                    elif var_name == "SERVERMINUSONE":
+                        val = self.constants["SERVERS"] - 1
+                    elif var_name == "SWITCHPLUSONE":
+                        val = self.constants["SWITCHES"] + 1
                     elif var_name == "SWITCHMINUSONE":
                         val = self.constants["SWITCHES"] - 1
                     elif var_name == "SWITCHPLUSSERVER":
                         val = self.constants["SERVERS"] + self.constants["SWITCHES"]
-                    elif var_name == "SERVERMINUSONE":
-                        val = self.constants["SERVERS"] - 1
 
                 self.constants[var_name] = int(val)
                 # dfile.write(define_string%(var_name,int(val)))
@@ -338,7 +344,7 @@ class p4_code_generator():
                 op = res.op
 
                 replacement = res.before
-                for i in range(start, end+1, jump):
+                for i in range(start, end, jump):
                     replacement +=  "%s %s %s %s " % (var.replace("$i", str(i)), op, operand, logical_op)
                 replacement = replacement[:-2 - len(logical_op)] + res.after
                 dfile.write(replacement)
@@ -354,7 +360,7 @@ class p4_code_generator():
         globals()["sync_fields_count"] = max(len(fields), globals()["sync_fields_count"])
 
         sfile.write(TABLE_STRING%("sync",sync_id,"sync",sync_id))
-        sfile.write(ACTION_START_STRING%("sync",sync_id,field_name,val))
+        sfile.write(SYNC_ACTION_START_STRING%("sync",sync_id,field_name,val))
 
         for i in range(len(fields)):
             sfile.write(MODIFY_FIELD%(i,fields[i]))
@@ -368,7 +374,7 @@ class p4_code_generator():
         globals()["sync_fields_count"] = max(len(fields), globals()["sync_fields_count"])
 
         sfile.write(TABLE_STRING%("mirror",mirror_id,"mirror",mirror_id))
-        sfile.write(ACTION_START_STRING%("mirror",mirror_id,field_name,val))
+        sfile.write(MIRROR_ACTION_START_STRING%("mirror",mirror_id,field_name,val))
 
         for i in range(len(fields)):
             sfile.write(MODIFY_FIELD%(i,fields[i]))
