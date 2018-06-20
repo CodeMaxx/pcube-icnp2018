@@ -94,6 +94,22 @@ HEADER = "header sync_info_t sync_info;\n"
 APPLY_SYNC_STRING = "%sapply(sync_info%d_table);\n"
 APPLY_MIRROR_STRING = "%sapply(mirror_info%d_table);\n"
 
+INTRINSIC_METADATA = \
+"header_type intrinsic_metadata_t {\n\
+    fields {\n\
+        mcast_grp : 16;\n\
+        egress_rid : 16;\n\
+    }\n\
+}\n\
+metadata intrinsic_metadata_t intrinsic_metadata;\n\n\
+"
+
+META_LIST = \
+"field_list meta_list {\n\
+    standard_metadata;\n\
+    intrinsic_metadata;\n\
+}\n\n"
+
 class p4_code_generator():
 
     def __init__(self, switch_id, src, dest, filename):
@@ -471,6 +487,8 @@ def generate_sync_header(filename):
     sfile.write(HEADER_END_STRING)
     sfile.write(HEADER)
 
+    sfile.write(INTRINSIC_METADATA)
+    sfile.write(META_LIST)
     sfile.close()
 
 def get_topo_data():

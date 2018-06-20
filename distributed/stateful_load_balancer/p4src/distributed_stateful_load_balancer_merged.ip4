@@ -68,14 +68,6 @@ header_type meta_t {
 }
 metadata meta_t meta;
 
-header_type intrinsic_metadata_t {
-    fields {
-        mcast_grp : 16;
-        egress_rid : 16;
-    }
-}
-metadata intrinsic_metadata_t intrinsic_metadata;
-
 // ---------------------- Hashing ------------------
 
 field_list flow_list {
@@ -265,14 +257,6 @@ action forward() {
     modify_field_with_hash_based_offset(meta.hash, 0, flow_register_index, 65536);
     register_read(meta.routing_port, flow_to_port_map_register, meta.hash);
     modify_field(standard_metadata.egress_spec, meta.routing_port);
-    modify_field(load_balancer_head.hash, (@pcube_sum (1, SERVERS,1)(meta.server_flow$i)));
-    modify_field(load_balancer_head._count, standard_metadata.egress_spec);
-}
-
-field_list meta_list {
-    meta;
-    standard_metadata;
-    intrinsic_metadata;
 }
 
 action clear_map() {
@@ -329,7 +313,7 @@ control ingress {
                 apply(set_server_dest_port_table);
 
                 //Take decision to send probe packet or not (Reactive)
-                if ((@pcube_sum (1, SERVERS,1)(meta.server_flow$i))*100 > (UPPER_LIMIT * SERVERMINUSONE * THRESHOLD)){
+                if ((@pcube_sum (1, SERVERS,1)(meta.server_flow$i))*100 > (meta.upper_limit * SERVERMINUSONE * THRESHOLD)){
                     apply(set_probe_bool_table);
                 }
             }
@@ -379,7 +363,7 @@ control ingress {
             apply(update_flow_count_table);
 
             //Take decision to send probe packet or not (Proactive)
-            if ((@pcube_sum (1, SERVERS ,1)(meta.server_flow$i))*100 < (LOWER_LIMIT * SERVERMINUSONE * THRESHOLD)){
+            if ((@pcube_sum (1, SERVERS ,1)(meta.server_flow$i))*100 < (meta.lower_limit * SERVERMINUSONE * THRESHOLD)){
                 if(meta.routing_port == 2 or meta.routing_port == 3){
 
                     //Send broadcast (set preamble as 2)
