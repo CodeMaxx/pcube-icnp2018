@@ -427,9 +427,7 @@ class p4_code_generator():
         sfile.close()
         dfile.close()
 
-    def generate_commands_template(self):
-        sfile = open(self.dest, 'r')
-        dfile = open('commands_template_merged_%s.txt'%self.string_id, 'w')
+    def generate_commands_template_helper(self,sfile,dfile):
         open_brac = Optional(White()) + "{" + Optional(White())
         close_brac = Optional(White()) + "}" + Optional(White())
         actions_format = Keyword('actions') + open_brac + Word(alphas + "_", alphanums+"_")('default_action') \
@@ -443,12 +441,26 @@ class p4_code_generator():
 
         for table in res:
             dfile.write('table_set_default %s %s\n' % (table.table_name, table.default_action))
-        
+
+    def generate_commands_template(self):
+        sfile = open(self.dest, 'r')
+        dfile = open('commands_template_merged_%s.txt'%self.string_id, 'w')
+
+        self.generate_commands_template_helper(sfile,dfile)
         #Hardcoded limits temporarily
         dfile.write('table_add get_limits_table get_limits => 20 80\n')
-
+        
         sfile.close()
         dfile.close()
+        
+        sfile = open(self.destsync, 'r')
+        dfile = open('sync_commands_%s.txt'%self.string_id, 'w')
+        
+        self.generate_commands_template_helper(sfile,dfile)
+        
+        sfile.close()
+        dfile.close()
+
 
 def generate_sync_header(filename):
     sfile = open(filename+"_sync_header.p4",'w')

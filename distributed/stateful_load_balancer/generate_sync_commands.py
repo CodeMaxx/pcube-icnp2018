@@ -15,7 +15,7 @@ def generate_sync_commands(topo_stats):
 
 	for key in keylist:
 		node_no = 0
-		f = open("sync_commands_%s.txt"%key, "w")
+		f = open("sync_commands_%s.txt"%key, 'a')
 		stat = topo_stats[key]
 		num_hosts = stat["SERVERS"]
 		num_switches = stat["SWITCHES"]
