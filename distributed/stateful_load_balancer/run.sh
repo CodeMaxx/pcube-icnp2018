@@ -35,7 +35,6 @@ SWITCH_PATH=$BMV2_PATH/targets/simple_switch/simple_switch
 CLI_PATH=$BMV2_PATH/tools/modified_runtime_CLI.py
 # CLI_PATH=$BMV2_PATH/targets/simple_switch/sswitch_CLI.py
 
-
 ###--- Read topo, create json dump of topology
 python topo_to_json.py
 
